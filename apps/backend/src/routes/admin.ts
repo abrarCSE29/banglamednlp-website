@@ -28,15 +28,122 @@ router.get('/dashboard', async (req, res) => {
     try {
         const totalRecords = await prisma.triageRecord.count();
         const verifiedRecords = await prisma.verification.count();
+        const totalAssignments = await prisma.doctorAssignment.count();
 
-        // Simplification for v1.0 progress reporting
+        // Get unique records that have at least one assignment
+        const assignedRecordsCount = await prisma.doctorAssignment.groupBy({
+            by: ['record_id'],
+            _count: true
+        }).then(res => res.length);
+
         const doctors = await prisma.user.findMany({
             where: { role: 'DOCTOR' },
-            select: { id: true, name: true, specialty: true, is_active: true, _count: { select: { verifications: true } } }
+            select: {
+                id: true,
+                name: true,
+                specialty: true,
+                is_active: true,
+                _count: {
+                    select: {
+                        verifications: true,
+                        assigned_records: true
+                    }
+                }
+            }
         });
 
-        res.json({ totalRecords, verifiedRecords, doctors });
+        // === DATASET QUALITY METRICS ===
+        const verifications = await prisma.verification.findMany({
+            include: { record: true }
+        });
+
+        const totalVerifications = verifications.length;
+        let acceptedCount = 0;
+        let fixCount = 0;
+        let rejectedCount = 0;
+
+        const DEPARTMENTS = [
+            'medicine', 'neurology', 'surgery', 'gastroenterology', 'pediatrics',
+            'cardiology', 'ent', 'orthopedics', 'endocrinology', 'nephrology',
+            'psychiatry', 'dermatology', 'pulmonology', 'ophthalmology',
+            'hematology', 'urology', 'gynecology', 'rheumatology'
+        ];
+
+        // Track agreement for Kappa (Macro-average over departments)
+        let totalKappa = 0;
+        let validKappaDepartments = 0;
+
+        if (totalVerifications > 0) {
+            verifications.forEach(v => {
+                if (v.is_unable_to_assess) {
+                    rejectedCount++;
+                    return;
+                }
+
+                const aiDepts = DEPARTMENTS.filter(d => (v.record as any)[d] === 1).sort();
+                const docDeptsDict = v.verified_departments as Record<string, boolean>;
+                const docDepts = Object.entries(docDeptsDict)
+                    .filter(([_, val]) => val)
+                    .map(([key]) => key)
+                    .sort();
+
+                if (JSON.stringify(aiDepts) === JSON.stringify(docDepts)) {
+                    acceptedCount++;
+                } else {
+                    fixCount++;
+                }
+            });
+
+            // Kappa Calculation (Simplified Multi-label approach: calculate per department and average)
+            DEPARTMENTS.forEach(dept => {
+                let TP = 0, TN = 0, FP = 0, FN = 0;
+                verifications.forEach(v => {
+                    if (v.is_unable_to_assess) return;
+                    const aiVal = (v.record as any)[dept] === 1;
+                    const docVal = !!(v.verified_departments as any)[dept];
+
+                    if (aiVal && docVal) TP++;
+                    else if (!aiVal && !docVal) TN++;
+                    else if (!aiVal && docVal) FP++;
+                    else if (aiVal && !docVal) FN++;
+                });
+
+                const total = TP + TN + FP + FN;
+                if (total === 0) return;
+
+                const observedAgreement = (TP + TN) / total;
+                const aiPositiveRate = (TP + FN) / total;
+                const docPositiveRate = (TP + FP) / total;
+                const expectedAgreement = (aiPositiveRate * docPositiveRate) + ((1 - aiPositiveRate) * (1 - docPositiveRate));
+
+                // If expectedAgreement is 1, kappa is indeterminate or 1? Handle denumerator.
+                const kappa = (expectedAgreement === 1) ? 1 : (observedAgreement - expectedAgreement) / (1 - expectedAgreement);
+
+                if (!isNaN(kappa)) {
+                    totalKappa += kappa;
+                    validKappaDepartments++;
+                }
+            });
+        }
+
+        const metrics = {
+            acceptanceRate: totalVerifications ? Math.round((acceptedCount / totalVerifications) * 100) : 0,
+            fixRate: totalVerifications ? Math.round((fixCount / totalVerifications) * 100) : 0,
+            rejectionRate: totalVerifications ? Math.round((rejectedCount / totalVerifications) * 100) : 0,
+            cohenKappa: validKappaDepartments ? parseFloat((totalKappa / validKappaDepartments).toFixed(3)) : 0
+        };
+
+        res.json({
+            totalRecords,
+            verifiedRecords,
+            totalAssignments,
+            assignedRecordsCount,
+            unassignedRecordsCount: totalRecords - assignedRecordsCount,
+            doctors,
+            metrics
+        });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Error fetching dashboard stats' });
     }
 });
@@ -46,7 +153,21 @@ router.get('/doctors', async (req, res) => {
     try {
         const doctors = await prisma.user.findMany({
             where: { role: 'DOCTOR' },
-            select: { id: true, name: true, email: true, specialty: true, institution: true, is_active: true, last_login_at: true, _count: { select: { verifications: true } } }
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                specialty: true,
+                institution: true,
+                is_active: true,
+                last_login_at: true,
+                _count: {
+                    select: {
+                        verifications: true,
+                        assigned_records: true
+                    }
+                }
+            }
         });
         res.json(doctors);
     } catch (error: any) {
@@ -126,6 +247,19 @@ router.put('/doctors/:id/deactivate', async (req, res) => {
     }
 });
 
+router.put('/doctors/:id/reactivate', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await prisma.user.update({
+            where: { id: parseInt(id) },
+            data: { is_active: true }
+        });
+        res.json({ message: 'Account reactivated' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error reactivating doctor' });
+    }
+});
+
 router.post('/doctors/:id/resend-email', async (req, res) => {
     // Generates a new temp password and resends it
     const { id } = req.params;
@@ -159,6 +293,48 @@ router.post('/doctors/:id/resend-email', async (req, res) => {
         res.json({ message: 'Credentials email resent' });
     } catch (error) {
         res.status(500).json({ message: 'Error resending email' });
+    }
+});
+
+router.post('/doctors/:id/assign', async (req, res) => {
+    const { id } = req.params;
+    const { count } = req.body;
+    const doctorId = parseInt(id);
+    const assignmentCount = parseInt(count) || 50;
+
+    try {
+        // Find records that are NOT assigned to ANYONE yet
+        // Using a raw query for random ordering as Prisma random sampling is complex
+        // We'll fetch IDs of unassigned records
+        const unassignedRecords = await prisma.$queryRaw<{ id: number }[]>`
+            SELECT id FROM triage_records 
+            WHERE id NOT IN (SELECT record_id FROM doctor_assignments)
+            ORDER BY RANDOM()
+            LIMIT ${assignmentCount}
+        `;
+
+        if (unassignedRecords.length === 0) {
+            res.status(404).json({ message: 'No unassigned records available' });
+            return;
+        }
+
+        const assignments = unassignedRecords.map(r => ({
+            doctor_id: doctorId,
+            record_id: r.id
+        }));
+
+        await prisma.doctorAssignment.createMany({
+            data: assignments,
+            skipDuplicates: true
+        });
+
+        res.json({
+            message: `Successfully assigned ${unassignedRecords.length} records to the physician.`,
+            count: unassignedRecords.length
+        });
+    } catch (error: any) {
+        console.error('Assignment Error:', error);
+        res.status(500).json({ message: 'Error assigning records', error: error.message });
     }
 });
 
@@ -242,7 +418,7 @@ router.delete('/dataset/uploads/:id', async (req, res) => {
     try {
         // Find associated records
         const records = await prisma.triageRecord.findMany({
-            where: { upload_id: uploadId },
+            where: { upload_id: uploadId } as any,
             select: { id: true }
         });
         const recordIds = records.map(r => r.id);
@@ -258,7 +434,7 @@ router.delete('/dataset/uploads/:id', async (req, res) => {
             }),
             // Delete the records themselves
             prisma.triageRecord.deleteMany({
-                where: { upload_id: uploadId }
+                where: { upload_id: uploadId } as any
             }),
             // Delete the upload registry
             prisma.datasetUpload.delete({
@@ -292,7 +468,7 @@ router.post('/dataset/reset', async (req, res) => {
 router.get('/dataset/uploads/:id/preview', async (req, res) => {
     try {
         const records = await prisma.triageRecord.findMany({
-            where: { upload_id: parseInt(req.params.id) },
+            where: { upload_id: parseInt(req.params.id) } as any,
             take: 50, // More records for specific preview
             orderBy: { id: 'asc' }
         });

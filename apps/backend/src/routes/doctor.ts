@@ -12,9 +12,11 @@ router.get('/progress', async (req: AuthRequest, res) => {
     try {
         const doctorId = req.user!.userId;
 
-        // In a real scenario, we might assign specific subsets to doctors. 
-        // If not, we use the global total minus what they verified.
-        const totalRecords = await prisma.triageRecord.count();
+        // Total records assigned to THIS doctor
+        const totalRecords = await prisma.doctorAssignment.count({
+            where: { doctor_id: doctorId }
+        });
+
         const verifiedCount = await prisma.verification.count({
             where: { doctor_id: doctorId }
         });
@@ -30,22 +32,28 @@ router.get('/queue', async (req: AuthRequest, res) => {
     try {
         const doctorId = req.user!.userId;
 
-        // Find the first TriageRecord that DOES NOT have a Verification from this doctor
-        const nextRecord = await prisma.triageRecord.findFirst({
+        // Find the first Record that is ASSIGNED to this doctor AND DOES NOT have a Verification from this doctor
+        const nextAssignment = await prisma.doctorAssignment.findFirst({
             where: {
-                verifications: {
-                    none: { doctor_id: doctorId }
+                doctor_id: doctorId,
+                record: {
+                    verifications: {
+                        none: { doctor_id: doctorId }
+                    }
                 }
             },
-            orderBy: { id: 'asc' }
+            include: {
+                record: true
+            },
+            orderBy: { record_id: 'asc' }
         });
 
-        if (!nextRecord) {
+        if (!nextAssignment) {
             res.status(200).json({ message: 'Queue complete', record: null });
             return;
         }
 
-        res.json({ record: nextRecord });
+        res.json({ record: nextAssignment.record });
     } catch (error) {
         console.error('Error fetching queue:', error);
         res.status(500).json({ message: 'Error fetching queue' });
