@@ -30,7 +30,7 @@ const DOCTOR_ITEMS = [
     { name: 'Verify Record', icon: Stethoscope, href: '/doctor/queue' },
 ];
 
-export default function Sidebar({ role }: { role: 'admin' | 'doctor' }) {
+export default function Sidebar({ role, onClose }: { role: 'admin' | 'doctor'; onClose?: () => void }) {
     const pathname = usePathname();
     const router = useRouter();
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -60,8 +60,9 @@ export default function Sidebar({ role }: { role: 'admin' | 'doctor' }) {
                         <span className="font-poppins whitespace-nowrap">Med Triage</span>
                     </div>
                 )}
+                {/* Collapse toggle (desktop) or Close button (mobile) */}
                 <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    onClick={() => { if (onClose) { onClose(); } else { setIsCollapsed(!isCollapsed); } }}
                     className="p-1 hover:bg-white/5 rounded-lg transition-colors ml-auto"
                 >
                     {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
