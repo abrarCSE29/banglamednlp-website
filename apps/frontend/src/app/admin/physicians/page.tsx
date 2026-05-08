@@ -80,20 +80,20 @@ export default function PhysiciansPage() {
                 </button>
             </div>
 
-            <div className="glass-panel overflow-hidden rounded-xl border border-white/5">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-white/[0.02] uppercase text-xs text-muted-foreground">
+                    <thead className="bg-slate-50 uppercase text-xs text-muted-foreground">
                         <tr>
-                            <th className="px-6 py-4 font-medium border-b border-white/5">Name / Email</th>
-                            <th className="px-6 py-4 font-medium border-b border-white/5">Specialty</th>
-                            <th className="px-6 py-4 font-medium border-b border-white/5">Status</th>
-                            <th className="px-6 py-4 font-medium border-b border-white/5">Records</th>
-                            <th className="px-6 py-4 font-medium border-b border-white/5 text-right">Actions</th>
+                            <th className="px-6 py-4 font-medium border-b border-slate-100">Name / Email</th>
+                            <th className="px-6 py-4 font-medium border-b border-slate-100">Specialty</th>
+                            <th className="px-6 py-4 font-medium border-b border-slate-100">Status</th>
+                            <th className="px-6 py-4 font-medium border-b border-slate-100">Records</th>
+                            <th className="px-6 py-4 font-medium border-b border-slate-100 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {doctors.map(doctor => (
-                            <tr key={doctor.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                            <tr key={doctor.id} className="border-b border-slate-100 hover:bg-slate-50">
                                 <td className="px-6 py-4">
                                     <div className="font-medium text-foreground">{doctor.name}</div>
                                     <div className="text-xs text-muted-foreground">{doctor.email}</div>
@@ -138,28 +138,28 @@ export default function PhysiciansPage() {
 
             {isModalOpen && (
                 <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-card border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6">
+                    <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl p-6">
                         <h2 className="text-xl font-bold mb-4">Add New Physician</h2>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
                                 <label className="text-sm font-medium mb-1 block">Full Name</label>
-                                <input required type="text" className="w-full px-3 py-2 bg-secondary/50 rounded-lg border border-white/10 focus:border-primary outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                <input required type="text" className="w-full px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 focus:border-primary outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             </div>
                             <div>
                                 <label className="text-sm font-medium mb-1 block">Email Address</label>
-                                <input required type="email" className="w-full px-3 py-2 bg-secondary/50 rounded-lg border border-white/10 focus:border-primary outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                <input required type="email" className="w-full px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 focus:border-primary outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                             </div>
                             <div>
                                 <label className="text-sm font-medium mb-1 block">Specialty</label>
-                                <input required type="text" className="w-full px-3 py-2 bg-secondary/50 rounded-lg border border-white/10 focus:border-primary outline-none" value={formData.specialty} onChange={e => setFormData({ ...formData, specialty: e.target.value })} />
+                                <input required type="text" className="w-full px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 focus:border-primary outline-none" value={formData.specialty} onChange={e => setFormData({ ...formData, specialty: e.target.value })} />
                             </div>
                             <div>
                                 <label className="text-sm font-medium mb-1 block">Institution</label>
-                                <input required type="text" className="w-full px-3 py-2 bg-secondary/50 rounded-lg border border-white/10 focus:border-primary outline-none" value={formData.institution} onChange={e => setFormData({ ...formData, institution: e.target.value })} />
+                                <input required type="text" className="w-full px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 focus:border-primary outline-none" value={formData.institution} onChange={e => setFormData({ ...formData, institution: e.target.value })} />
                             </div>
 
                             <div className="flex gap-3 justify-end mt-6">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 hover:bg-white/5 rounded-lg">Cancel</button>
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 hover:bg-slate-100 rounded-lg">Cancel</button>
                                 <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium flex items-center gap-2">
                                     {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
                                 </button>

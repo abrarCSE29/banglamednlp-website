@@ -54,7 +54,7 @@ export default function DoctorDashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="glass-panel p-8 rounded-2xl flex flex-col justify-center space-y-4 shadow-xl border border-white/10">
+                <div className="bg-white p-8 rounded-2xl flex flex-col justify-center space-y-4 shadow-sm border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-3 bg-primary/20 text-primary rounded-xl">
                             <ListTodo className="w-6 h-6" />
@@ -66,7 +66,7 @@ export default function DoctorDashboard() {
                     </p>
                 </div>
 
-                <div className="glass-panel p-8 rounded-2xl flex flex-col justify-center space-y-4 shadow-xl border border-white/10">
+                <div className="bg-white p-8 rounded-2xl flex flex-col justify-center space-y-4 shadow-sm border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-3 bg-emerald-500/20 text-emerald-500 rounded-xl">
                             <CheckCircle2 className="w-6 h-6" />
@@ -79,12 +79,12 @@ export default function DoctorDashboard() {
                 </div>
             </div>
 
-            <div className="glass-panel p-8 rounded-2xl mt-8 shadow-xl border border-white/10">
+            <div className="bg-white p-8 rounded-2xl mt-8 shadow-sm border border-slate-200">
                 <div className="flex justify-between items-end mb-4">
                     <h3 className="font-semibold text-xl">Overall Progress</h3>
                     <span className="text-2xl font-bold text-primary">{completionPercentage}%</span>
                 </div>
-                <div className="w-full h-6 bg-secondary/60 rounded-full overflow-hidden border border-white/5">
+                <div className="w-full h-6 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                     <div
                         className="h-full bg-gradient-to-r from-primary to-blue-500 transition-all duration-1000 ease-out"
                         style={{ width: `${completionPercentage}%` }}

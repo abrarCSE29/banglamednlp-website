@@ -101,13 +101,14 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground font-sans;
     font-family: var(--font-inter), 'Noto Sans Bengali', sans-serif;
   }
 }
 
-/* Glassmorphism utility */
+/* Glassmorphism utility - adapted for light theme */
 .glass-panel {
-  @apply bg-background/60 backdrop-blur-md border border-white/10 shadow-lg;
+  @apply bg-white/70 backdrop-blur-md border border-slate-200 shadow-sm transition-all duration-300;
 }

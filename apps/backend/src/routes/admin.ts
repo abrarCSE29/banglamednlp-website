@@ -220,9 +220,12 @@ router.post('/dataset/upload', upload.single('file'), async (req, res) => {
             }
         });
 
+        // Add upload_id to all records
+        const recordsWithUploadId = records.map(r => ({ ...r, upload_id: uploadEntry.id }));
+
         const createMany = await prisma.triageRecord.createMany({
-            data: records,
-            skipDuplicates: true, // We skip duplicates. Complex logic like Append/Replace requires a query first, but simplified here.
+            data: recordsWithUploadId,
+            skipDuplicates: true,
         });
 
         res.json({ message: 'Upload successful', rowsImported: createMany.count, uploadId: uploadEntry.id });
@@ -232,7 +235,73 @@ router.post('/dataset/upload', upload.single('file'), async (req, res) => {
     }
 });
 
+router.delete('/dataset/uploads/:id', async (req, res) => {
+    const { id } = req.params;
+    const uploadId = parseInt(id);
+
+    try {
+        // Find associated records
+        const records = await prisma.triageRecord.findMany({
+            where: { upload_id: uploadId },
+            select: { id: true }
+        });
+        const recordIds = records.map(r => r.id);
+
+        await prisma.$transaction([
+            // Delete verifications associated with these records
+            prisma.verification.deleteMany({
+                where: { record_id: { in: recordIds } }
+            }),
+            // Delete doctor assignments
+            prisma.doctorAssignment.deleteMany({
+                where: { record_id: { in: recordIds } }
+            }),
+            // Delete the records themselves
+            prisma.triageRecord.deleteMany({
+                where: { upload_id: uploadId }
+            }),
+            // Delete the upload registry
+            prisma.datasetUpload.delete({
+                where: { id: uploadId }
+            })
+        ]);
+
+        res.json({ message: 'Dataset source and associated records deleted permanently.' });
+    } catch (error: any) {
+        console.error('Delete Dataset Error:', error);
+        res.status(500).json({ message: 'Error deleting dataset source', error: error.message });
+    }
+});
+
+router.post('/dataset/reset', async (req, res) => {
+    try {
+        await prisma.$transaction([
+            prisma.verification.deleteMany(),
+            prisma.doctorAssignment.deleteMany(),
+            prisma.triageRecord.deleteMany(),
+            prisma.datasetUpload.deleteMany()
+        ]);
+        res.json({ message: 'All dataset records and verification work have been wiped successfully.' });
+    } catch (error: any) {
+        console.error('Reset Database Error:', error);
+        res.status(500).json({ message: 'Error resetting database', error: error.message });
+    }
+});
+
 // Dataset History & Preview
+router.get('/dataset/uploads/:id/preview', async (req, res) => {
+    try {
+        const records = await prisma.triageRecord.findMany({
+            where: { upload_id: parseInt(req.params.id) },
+            take: 50, // More records for specific preview
+            orderBy: { id: 'asc' }
+        });
+        res.json(records);
+    } catch (error: any) {
+        res.status(500).json({ message: 'Error fetching preview', error: error.message });
+    }
+});
+
 router.get('/dataset/uploads', async (req, res) => {
     try {
         const uploads = await prisma.datasetUpload.findMany({

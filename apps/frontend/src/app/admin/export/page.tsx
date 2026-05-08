@@ -15,9 +15,9 @@ export default function ExportPage() {
                 <p className="text-muted-foreground mt-1">Download the fully verified gold-standard corpus.</p>
             </div>
 
-            <div className="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center space-y-6">
-                <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30">
-                    <DownloadCloud className="w-10 h-10 text-primary" />
+            <div className="bg-white p-8 rounded-2xl flex flex-col items-center justify-center space-y-6 shadow-sm border border-slate-200">
+                <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100">
+                    <DownloadCloud className="w-10 h-10 text-indigo-600" />
                 </div>
 
                 <div className="text-center max-w-md space-y-2">

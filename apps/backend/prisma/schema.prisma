@@ -62,8 +62,11 @@ model TriageRecord {
   gynecology      Int @default(0)
   rheumatology    Int @default(0)
 
+  upload_id       Int?
+  
   verifications   Verification[]
   assignments     DoctorAssignment[]
+  upload          DatasetUpload?    @relation(fields: [upload_id], references: [id])
 
   @@map("triage_records")
 }
@@ -95,6 +98,7 @@ model DatasetUpload {
   version_tag      String?
 
   admin            User     @relation(fields: [uploaded_by], references: [id])
+  triage_records   TriageRecord[]
   
   @@map("dataset_uploads")
 }

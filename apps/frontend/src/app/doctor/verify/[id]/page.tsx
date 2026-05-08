@@ -165,33 +165,33 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
                 {/* Column 1: Patient Symptom Details (xl:col-span-3) */}
                 <div className="xl:col-span-3 space-y-6 xl:sticky xl:top-8">
-                    <div className="glass-panel p-6 rounded-2xl shadow-xl border border-white/10 bg-white/[0.02]">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <div className="flex items-center gap-2 mb-4">
                             <div className="w-2 h-6 bg-primary rounded-full" />
                             <h2 className="text-xl font-semibold">Symptom</h2>
                         </div>
 
-                        <div className="bg-black/20 p-5 rounded-xl border border-white/5 max-h-[500px] overflow-y-auto">
+                        <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 max-h-[500px] overflow-y-auto">
                             <p className="text-lg leading-relaxed text-foreground" style={{ fontFamily: "'Noto Sans Bengali', sans-serif" }}>
                                 {record?.symptom_text}
                             </p>
                         </div>
 
-                        <div className="mt-6 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
-                            <h3 className="text-sm font-medium text-amber-500 flex items-center gap-2 mb-2">
-                                <AlertTriangle className="w-4 h-4" /> AI Suggestion
+                        <div className="mt-6 p-4 rounded-xl border border-amber-200 bg-amber-50">
+                            <h3 className="text-xs font-bold text-amber-600 flex items-center gap-2 mb-2 uppercase tracking-wider">
+                                <AlertTriangle className="w-3.5 h-3.5" /> AI Suggestion
                             </h3>
-                            <p className="font-medium text-foreground text-sm">{record?.departments}</p>
+                            <p className="font-bold text-slate-900 text-sm">{record?.departments}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Column 2: Department Selection (xl:col-span-6) */}
                 <div className="xl:col-span-6 space-y-6">
-                    <div className="glass-panel p-6 rounded-2xl shadow-xl border border-white/10">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-bold text-xl tracking-tight">Select Departments</h3>
-                            <div className="text-xs text-muted-foreground px-2 py-1 rounded-full bg-white/5 border border-white/10">
+                            <div className="text-[10px] font-bold text-slate-500 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 uppercase tracking-wider">
                                 {Object.values(selections).filter(Boolean).length} Selected
                             </div>
                         </div>
@@ -207,14 +207,14 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                                         onClick={() => handleCheckbox(dep)}
                                         className={`group relative flex flex-col items-start p-4 rounded-xl border transition-all text-left h-24
                                             ${isSelected
-                                                ? 'bg-primary/10 border-primary/50 text-foreground shadow-[0_0_15px_rgba(var(--primary),0.15)] scale-[1.02]'
-                                                : 'bg-white/[0.02] border-white/10 text-muted-foreground hover:bg-white/5 hover:border-white/20'
+                                                ? 'bg-indigo-50 border-indigo-200 text-indigo-900 shadow-[0_4px_12px_rgba(79,70,229,0.08)] scale-[1.02]'
+                                                : 'bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                                             }
                                             ${isAiSuggested && !isSelected ? 'border-dashed border-amber-500/50' : ''}
                                         `}
                                     >
                                         <div className="flex items-center justify-between w-full mb-2">
-                                            <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isSelected ? 'bg-primary border-primary' : 'bg-transparent border-white/20 group-hover:border-white/40'
+                                            <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300 group-hover:border-slate-400'
                                                 }`}>
                                                 {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />}
                                             </div>
@@ -230,11 +230,11 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
 
                 {/* Column 3: Action Panel (xl:col-span-3) */}
                 <div className="xl:col-span-3 space-y-6 xl:sticky xl:top-8">
-                    <div className="glass-panel p-6 rounded-2xl shadow-xl border border-white/10 flex flex-col gap-6">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-6">
                         <h3 className="font-bold text-xl tracking-tight">Finalize</h3>
 
                         <div className="space-y-4">
-                            <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${unableToAssess ? 'bg-destructive/10 border-destructive/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 'bg-white/[0.02] border-white/10 hover:bg-white/5'}`}>
+                            <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${unableToAssess ? 'bg-rose-50 border-rose-200 shadow-sm' : 'bg-slate-50/50 border-slate-200 hover:bg-slate-50'}`}>
                                 <input
                                     type="checkbox"
                                     className="w-5 h-5 accent-destructive rounded outline-none"
@@ -259,7 +259,7 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                                 <textarea
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
-                                    className="w-full h-32 px-4 py-3 bg-white/[0.02] border border-white/10 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-sm placeholder:text-muted-foreground"
+                                    className="w-full h-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-none text-sm placeholder:text-slate-400"
                                     placeholder="Add clinical context..."
                                 />
                             </div>

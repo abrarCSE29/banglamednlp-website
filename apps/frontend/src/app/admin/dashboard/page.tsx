@@ -88,10 +88,10 @@ export default function AdminDashboard() {
             {/* Progress Bar */}
             <div className="glass-panel p-6 rounded-xl">
                 <div className="flex justify-between items-end mb-2">
-                    <h3 className="font-semibold text-lg border-none">Overall Progress</h3>
+                    <h3 className="font-semibold text-lg">Overall Progress</h3>
                     <span className="text-xl font-bold text-primary">{completionPercentage}%</span>
                 </div>
-                <div className="w-full h-4 bg-secondary rounded-full overflow-hidden border border-white/5">
+                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                     <div
                         className="h-full bg-primary transition-all duration-1000 ease-out"
                         style={{ width: `${completionPercentage}%` }}
@@ -100,25 +100,25 @@ export default function AdminDashboard() {
             </div>
 
             {/* Doctor Summary Table */}
-            <div className="glass-panel rounded-xl overflow-hidden mt-8 border-none ring-1 ring-white/10">
-                <div className="p-6 border-b border-white/5 bg-white/[0.02]">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mt-8 shadow-sm">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
                     <h3 className="font-semibold text-lg">Top Annotators</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="text-muted-foreground bg-white/[0.02] uppercase text-xs">
+                        <thead className="text-muted-foreground bg-slate-50 uppercase text-xs">
                             <tr>
-                                <th className="px-6 py-4 font-medium border-b border-light">Name</th>
-                                <th className="px-6 py-4 font-medium border-b border-light">Specialty</th>
-                                <th className="px-6 py-4 font-medium border-b border-light">Status</th>
-                                <th className="px-6 py-4 font-medium text-right border-b border-light">Verifications Completed</th>
+                                <th className="px-6 py-4 font-medium border-b border-slate-100">Name</th>
+                                <th className="px-6 py-4 font-medium border-b border-slate-100">Specialty</th>
+                                <th className="px-6 py-4 font-medium border-b border-slate-100">Status</th>
+                                <th className="px-6 py-4 font-medium text-right border-b border-slate-100">Verifications Completed</th>
                             </tr>
                         </thead>
                         <tbody>
                             {stats?.doctors
                                 .sort((a, b) => b._count.verifications - a._count.verifications)
                                 .map((doctor) => (
-                                    <tr key={doctor.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                                    <tr key={doctor.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 font-medium text-foreground">{doctor.name}</td>
                                         <td className="px-6 py-4 text-muted-foreground">{doctor.specialty || 'N/A'}</td>
                                         <td className="px-6 py-4">
