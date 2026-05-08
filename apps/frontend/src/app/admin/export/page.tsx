@@ -1,37 +1,70 @@
 'use client';
 
-import { DownloadCloud } from 'lucide-react';
+import { useState } from 'react';
+import { DownloadCloud, Loader2 } from 'lucide-react';
+import api from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function ExportPage() {
-    const handleExport = () => {
-        // Relying on native browser download via window.location because it's a file stream
-        window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/admin/dataset/export`;
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        try {
+            const response = await api.get('/admin/dataset/export', {
+                responseType: 'blob'
+            });
+
+            // Create a local URL for the blob
+            const url = window.URL.createObjectURL(new Blob([response.data as any]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'verified_triage_dataset.csv');
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Export Complete', {
+                description: 'Your dataset is now downloading.'
+            });
+        } catch (error) {
+            console.error('Export failed:', error);
+            toast.error('Export Failed', {
+                description: 'Could not generate the CSV. Please ensure you have data available.'
+            });
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     return (
-        <div className="space-y-6 max-w-3xl">
+        <div className="space-y-8 w-full max-w-4xl">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Export Dataset</h1>
-                <p className="text-muted-foreground mt-1">Download the fully verified gold-standard corpus.</p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Export Corpus</h1>
+                <p className="text-slate-500 mt-1">Download the fully verified gold-standard medical dataset.</p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl flex flex-col items-center justify-center space-y-6 shadow-sm border border-slate-200">
-                <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100">
-                    <DownloadCloud className="w-10 h-10 text-indigo-600" />
+            <div className="bg-white p-12 rounded-3xl flex flex-col items-center justify-center space-y-8 shadow-sm border border-slate-200 text-center">
+                <div className="w-24 h-24 bg-indigo-50 rounded-3xl flex items-center justify-center border border-indigo-100 shadow-inner">
+                    <DownloadCloud className="w-12 h-12 text-indigo-600" />
                 </div>
 
-                <div className="text-center max-w-md space-y-2">
-                    <h2 className="text-xl font-semibold">Download Verified Annotations</h2>
-                    <p className="text-sm text-muted-foreground">
-                        This will generate a CSV containing the original symptom text, AI-assigned labels, and the final physician-verified binary classifications.
+                <div className="max-w-md space-y-3">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Verified Annotations</h2>
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                        Generate a comprehensive CSV containing original Bangla symptoms, AI labels, and physician validations. This dataset is optimized for further NLP training.
                     </p>
                 </div>
 
                 <button
                     onClick={handleExport}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20"
+                    disabled={isExporting}
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 text-white px-10 py-4 rounded-xl font-black transition-all shadow-xl shadow-indigo-200 active:scale-95 flex items-center gap-3 uppercase tracking-widest text-xs"
                 >
-                    Generate & Download CSV
+                    {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <DownloadCloud className="w-5 h-5" />}
+                    {isExporting ? 'Preparing File...' : 'Download CSV Archive'}
                 </button>
             </div>
         </div>

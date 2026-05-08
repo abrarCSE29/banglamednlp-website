@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, ListTodo, Loader2, ArrowRight } from 'lucide-react';
 import api from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function DoctorDashboard() {
     const router = useRouter();
@@ -31,10 +32,12 @@ export default function DoctorDashboard() {
             if (queueData.record) {
                 router.push(`/doctor/verify/${queueData.record.id}`);
             } else {
-                alert('You have verified all available records!');
+                toast.info('Verification Complete', {
+                    description: 'You have verified all available records!'
+                });
             }
         } catch (e) {
-            alert('Error fetching queue.');
+            toast.error('Error fetching queue');
         }
     };
 
@@ -47,58 +50,58 @@ export default function DoctorDashboard() {
         : 0;
 
     return (
-        <div className="max-w-4xl mx-auto p-8 pt-12 space-y-8">
+        <div className="max-w-4xl mx-auto space-y-8">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Welcome to the Verification Queue</h1>
                 <p className="text-muted-foreground mt-2 text-lg">Your expert input ensures our AI models learn precise, localized medical associations.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-8 rounded-2xl flex flex-col justify-center space-y-4 shadow-sm border border-slate-200">
+                <div className="bg-white p-10 rounded-3xl flex flex-col justify-center space-y-4 shadow-sm border border-slate-200 group hover:border-indigo-200 transition-colors">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-3 bg-primary/20 text-primary rounded-xl">
-                            <ListTodo className="w-6 h-6" />
+                        <div className="p-4 bg-indigo-50 text-indigo-500 rounded-2xl group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm">
+                            <ListTodo className="w-7 h-7" />
                         </div>
-                        <h3 className="text-lg font-medium text-muted-foreground">Pending Queue</h3>
+                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Pending Queue</h3>
                     </div>
-                    <p className="text-4xl font-bold text-foreground">
-                        {stats.totalRecords - stats.verifiedCount} <span className="text-lg font-normal text-muted-foreground">records left</span>
+                    <p className="text-5xl font-black text-slate-900 leading-none">
+                        {stats.totalRecords - stats.verifiedCount} <span className="text-lg font-medium text-slate-400 uppercase tracking-tighter">records left</span>
                     </p>
                 </div>
 
-                <div className="bg-white p-8 rounded-2xl flex flex-col justify-center space-y-4 shadow-sm border border-slate-200">
+                <div className="bg-white p-10 rounded-3xl flex flex-col justify-center space-y-4 shadow-sm border border-slate-200 group hover:border-emerald-200 transition-colors">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-3 bg-emerald-500/20 text-emerald-500 rounded-xl">
-                            <CheckCircle2 className="w-6 h-6" />
+                        <div className="p-4 bg-emerald-50 text-emerald-500 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
+                            <CheckCircle2 className="w-7 h-7" />
                         </div>
-                        <h3 className="text-lg font-medium text-muted-foreground">Your Contributions</h3>
+                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Your Impact</h3>
                     </div>
-                    <p className="text-4xl font-bold text-foreground">
-                        {stats.verifiedCount} <span className="text-lg font-normal text-muted-foreground">verified</span>
+                    <p className="text-5xl font-black text-slate-900 leading-none">
+                        {stats.verifiedCount} <span className="text-lg font-medium text-slate-400 uppercase tracking-tighter">verified</span>
                     </p>
                 </div>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl mt-8 shadow-sm border border-slate-200">
-                <div className="flex justify-between items-end mb-4">
-                    <h3 className="font-semibold text-xl">Overall Progress</h3>
-                    <span className="text-2xl font-bold text-primary">{completionPercentage}%</span>
+            <div className="bg-white p-10 rounded-[2.5rem] mt-8 shadow-sm border border-slate-200 flex flex-col items-center">
+                <div className="w-full flex justify-between items-end mb-5 px-2">
+                    <h3 className="font-black text-2xl text-slate-900 tracking-tight">Queue Progress</h3>
+                    <span className="text-3xl font-black text-indigo-600">{completionPercentage}%</span>
                 </div>
-                <div className="w-full h-6 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                <div className="w-full h-8 bg-slate-100 rounded-full overflow-hidden border border-slate-200 p-1.5 shadow-inner">
                     <div
-                        className="h-full bg-gradient-to-r from-primary to-blue-500 transition-all duration-1000 ease-out"
+                        className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 rounded-full transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(99,102,241,0.3)]"
                         style={{ width: `${completionPercentage}%` }}
                     />
                 </div>
 
-                <div className="mt-8 flex justify-center">
+                <div className="mt-12 w-full max-w-sm">
                     <button
                         onClick={handleStart}
                         disabled={stats.totalRecords === stats.verifiedCount}
-                        className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-white px-8 py-4 rounded-xl font-bold text-lg transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-primary/30 flex items-center gap-3"
+                        className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 text-white py-6 rounded-2xl font-black text-xl transition-all shadow-24 active:scale-95 flex items-center justify-center gap-4 uppercase tracking-tighter"
                     >
-                        {stats.totalRecords === stats.verifiedCount ? 'Queue Complete 🎉' : 'Start Verification'}
-                        {stats.totalRecords !== stats.verifiedCount && <ArrowRight className="w-6 h-6" />}
+                        {stats.totalRecords === stats.verifiedCount ? 'All Verified 🏆' : 'Open Verification Deck'}
+                        {stats.totalRecords !== stats.verifiedCount && <ArrowRight className="w-7 h-7" />}
                     </button>
                 </div>
             </div>

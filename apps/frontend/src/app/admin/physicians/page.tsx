@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserPlus, Mail, ShieldAlert, Loader2 } from 'lucide-react';
+import { UserPlus, Mail, ShieldAlert, Loader2, X } from 'lucide-react';
 import api from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function PhysiciansPage() {
     const [doctors, setDoctors] = useState<any[]>([]);
@@ -33,11 +34,14 @@ export default function PhysiciansPage() {
         setIsSubmitting(true);
         try {
             await api.post('/admin/doctors', formData);
+            toast.success('Physician created successfully', {
+                description: `${formData.name} can now access the portal.`
+            });
             setIsModalOpen(false);
             setFormData({ name: '', email: '', specialty: '', institution: '' });
             fetchDoctors();
         } catch (e: any) {
-            alert(e.response?.data?.message || 'Error creating doctor');
+            toast.error(e.response?.data?.message || 'Error creating doctor');
         } finally {
             setIsSubmitting(false);
         }
@@ -47,9 +51,10 @@ export default function PhysiciansPage() {
         if (!confirm('Are you sure you want to deactivate this account?')) return;
         try {
             await api.put(`/admin/doctors/${id}/deactivate`);
+            toast.success('Account deactivated');
             fetchDoctors();
         } catch (e) {
-            alert('Error deactivating');
+            toast.error('Error deactivating');
         }
     };
 
@@ -57,9 +62,11 @@ export default function PhysiciansPage() {
         if (!confirm('This will generate a new password and email it to the doctor. Continue?')) return;
         try {
             await api.post(`/admin/doctors/${id}/resend-email`);
-            alert('Email resent successfully.');
+            toast.success('Email resent successfully', {
+                description: 'A new password has been generated.'
+            });
         } catch (e) {
-            alert('Error resending email');
+            toast.error('Error resending email');
         }
     };
 
@@ -137,9 +144,14 @@ export default function PhysiciansPage() {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl p-6">
-                        <h2 className="text-xl font-bold mb-4">Add New Physician</h2>
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsModalOpen(false)}>
+                    <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md shadow-2xl p-8 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-slate-900">Add New Physician</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-full transition-all">
+                                <X className="w-5 h-5 text-slate-400" />
+                            </button>
+                        </div>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
                                 <label className="text-sm font-medium mb-1 block">Full Name</label>

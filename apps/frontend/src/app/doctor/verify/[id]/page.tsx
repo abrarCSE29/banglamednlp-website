@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Save, ArrowRight, AlertTriangle, ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { Loader2, Save, AlertTriangle, ChevronLeft, CheckCircle2, ArrowRight, X } from 'lucide-react';
 import api from '@/lib/api';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const DEPARTMENTS = [
     'medicine', 'neurology', 'surgery', 'gastroenterology', 'pediatrics',
@@ -58,8 +60,7 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
 
                 setSelections(initialSelections);
             } catch (error) {
-                console.error(error);
-                alert('Failed to load record.');
+                toast.error('Failed to load record');
                 router.push('/doctor/dashboard');
             } finally {
                 setLoading(false);
@@ -100,16 +101,14 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
     const handleSubmit = async () => {
         const selectedCount = Object.values(selections).filter(Boolean).length;
         if (selectedCount === 0 && !unableToAssess) {
-            alert('You must select at least one department, or check "Unable to assess".');
+            toast.warning('Incomplete Submission', {
+                description: 'You must select at least one department, or check "Unable to assess".'
+            });
             return;
         }
 
         setSubmitting(true);
         try {
-            // Upsert logic handled by backend if we wanted to simplify. Let's just blindly push 
-            // POST handles both thanks to how we set up the route (actually POST creates, PUT updates).
-            // Let's assume the router automatically handles upsert logic, wait, POST returns 409 if exists.
-            // So let's check if it exists or simply use POST first.
             try {
                 await api.post('/doctor/verifications', {
                     record_id: id,
@@ -129,6 +128,10 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                 }
             }
 
+            toast.success('Verification Submitted', {
+                description: 'Data has been synchronized.'
+            });
+
             // Automatically fetch next from queue
             const queueRes = await api.get('/doctor/queue');
             const queueData = queueRes.data as any;
@@ -139,64 +142,67 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
             }
 
         } catch (error) {
-            alert('Failed to submit verification');
+            toast.error('Submission Failed');
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) return <div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+    if (loading) return <div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>;
 
     return (
-        <div className="w-full mx-auto p-4 md:p-8 space-y-6">
-            <div className="flex items-center justify-between mb-2">
+        <div className="w-full space-y-8">
+            <div className="flex items-center justify-between">
                 <button
                     onClick={() => router.push('/doctor/dashboard')}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors group"
                 >
-                    <ChevronLeft className="w-4 h-4" /> Back to Dashboard
+                    <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Queue
                 </button>
-                <div className="text-xs font-mono text-muted-foreground flex items-center gap-2">
-                    {savingDraft && <span className="text-emerald-500 animate-pulse flex items-center gap-1"><Save className="w-3 h-3" /> Auto-saving...</span>}
-                    <span>Record ID: {record?.id}</span>
+                <div className="text-[10px] font-bold text-slate-400 flex items-center gap-4 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+                    {savingDraft && <span className="text-emerald-500 animate-pulse flex items-center gap-1.5"><Save className="w-3.5 h-3.5" /> Synchronizing Draft...</span>}
+                    <span className="uppercase tracking-widest">Protocol ID: <span className="text-slate-900">#TR-{record?.id}</span></span>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-                {/* Column 1: Patient Symptom Details (xl:col-span-3) */}
-                <div className="xl:col-span-3 space-y-6 xl:sticky xl:top-8">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="w-2 h-6 bg-primary rounded-full" />
-                            <h2 className="text-xl font-semibold">Symptom</h2>
+                {/* Column 1: Patient Symptom Details */}
+                <div className="xl:col-span-4 space-y-6 xl:sticky xl:top-[100px]">
+                    <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-2.5 h-6 bg-indigo-500 rounded-full" />
+                            <h2 className="text-xl font-bold text-slate-900 tracking-tight font-poppins">Clinical Input</h2>
                         </div>
 
-                        <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 max-h-[500px] overflow-y-auto">
-                            <p className="text-lg leading-relaxed text-foreground" style={{ fontFamily: "'Noto Sans Bengali', sans-serif" }}>
+                        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 max-h-[400px] overflow-y-auto shadow-inner">
+                            <p className="text-lg leading-relaxed text-slate-900 font-medium" style={{ fontFamily: "'Noto Sans Bengali', sans-serif" }}>
                                 {record?.symptom_text}
                             </p>
                         </div>
 
-                        <div className="mt-6 p-4 rounded-xl border border-amber-200 bg-amber-50">
-                            <h3 className="text-xs font-bold text-amber-600 flex items-center gap-2 mb-2 uppercase tracking-wider">
-                                <AlertTriangle className="w-3.5 h-3.5" /> AI Suggestion
+                        <div className="mt-8 p-6 rounded-2xl border border-amber-200 bg-amber-50/50 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <AlertTriangle className="w-12 h-12 text-amber-500" />
+                            </div>
+                            <h3 className="text-[10px] font-bold text-amber-600 flex items-center gap-2 mb-3 uppercase tracking-[0.2em] font-poppins">
+                                AI Classification
                             </h3>
-                            <p className="font-bold text-slate-900 text-sm">{record?.departments}</p>
+                            <p className="font-bold text-slate-900 text-lg uppercase tracking-tight">{record?.departments}</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Column 2: Department Selection (xl:col-span-6) */}
-                <div className="xl:col-span-6 space-y-6">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                {/* Column 2: Department Selection */}
+                <div className="xl:col-span-5 space-y-6">
+                    <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-bold text-xl tracking-tight">Select Departments</h3>
-                            <div className="text-[10px] font-bold text-slate-500 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 uppercase tracking-wider">
-                                {Object.values(selections).filter(Boolean).length} Selected
+                            <h3 className="font-bold text-xl text-slate-900 tracking-tight font-poppins">Departmental Matrix</h3>
+                            <div className="text-[10px] font-bold text-indigo-600 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 uppercase tracking-widest shadow-sm">
+                                {Object.values(selections).filter(Boolean).length} Mapped
                             </div>
                         </div>
 
-                        <div className={`grid grid-cols-2 md:grid-cols-3 gap-3 transition-opacity duration-300 ${unableToAssess ? 'opacity-30 pointer-events-none' : ''}`}>
+                        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 transition-all duration-500 ${unableToAssess ? 'opacity-20 grayscale pointer-events-none scale-95' : ''}`}>
                             {DEPARTMENTS.map((dep) => {
                                 const isSelected = selections[dep];
                                 const isAiSuggested = aiSuggestions[dep];
@@ -205,22 +211,35 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                                     <button
                                         key={dep}
                                         onClick={() => handleCheckbox(dep)}
-                                        className={`group relative flex flex-col items-start p-4 rounded-xl border transition-all text-left h-24
-                                            ${isSelected
-                                                ? 'bg-indigo-50 border-indigo-200 text-indigo-900 shadow-[0_4px_12px_rgba(79,70,229,0.08)] scale-[1.02]'
-                                                : 'bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-                                            }
-                                            ${isAiSuggested && !isSelected ? 'border-dashed border-amber-500/50' : ''}
-                                        `}
+                                        className={cn(
+                                            "group relative flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
+                                            isSelected
+                                                ? "bg-indigo-600 border-transparent text-white shadow-lg shadow-indigo-100"
+                                                : "bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:bg-slate-50/50",
+                                            isAiSuggested && !isSelected && "border-dashed border-amber-300"
+                                        )}
                                     >
-                                        <div className="flex items-center justify-between w-full mb-2">
-                                            <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300 group-hover:border-slate-400'
-                                                }`}>
-                                                {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />}
-                                            </div>
-                                            {isAiSuggested && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500 ring-1 ring-amber-500/30">AI</span>}
+                                        <div className={cn(
+                                            "w-5 h-5 rounded flex items-center justify-center border transition-all shrink-0",
+                                            isSelected ? "bg-white border-white" : "bg-slate-50 border-slate-200"
+                                        )}>
+                                            {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />}
                                         </div>
-                                        <span className="text-sm font-bold capitalize mt-auto truncate w-full tracking-tight">{dep}</span>
+
+                                        <div className="flex flex-col min-w-0">
+                                            <span className={cn(
+                                                "text-[12px] font-bold capitalize truncate tracking-tight leading-none",
+                                                isSelected ? "text-white" : "text-slate-900"
+                                            )}>{dep}</span>
+                                            {isAiSuggested && (
+                                                <span className={cn(
+                                                    "text-[8px] font-black uppercase tracking-tighter mt-0.5",
+                                                    isSelected ? "text-white/60" : "text-amber-600"
+                                                )}>
+                                                    AI Pred
+                                                </span>
+                                            )}
+                                        </div>
                                     </button>
                                 );
                             })}
@@ -228,16 +247,16 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                     </div>
                 </div>
 
-                {/* Column 3: Action Panel (xl:col-span-3) */}
-                <div className="xl:col-span-3 space-y-6 xl:sticky xl:top-8">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-6">
-                        <h3 className="font-bold text-xl tracking-tight">Finalize</h3>
+                {/* Column 3: Action Panel */}
+                <div className="xl:col-span-3 space-y-6 xl:sticky xl:top-[100px]">
+                    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col gap-6">
+                        <h3 className="font-black text-xl text-slate-900 tracking-tight">Certification</h3>
 
-                        <div className="space-y-4">
-                            <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${unableToAssess ? 'bg-rose-50 border-rose-200 shadow-sm' : 'bg-slate-50/50 border-slate-200 hover:bg-slate-50'}`}>
+                        <div className="space-y-6">
+                            <label className={`flex items-center gap-4 p-5 rounded-2xl border cursor-pointer transition-all group ${unableToAssess ? 'bg-rose-600 border-transparent text-white shadow-xl shadow-rose-200' : 'bg-slate-50 border-slate-200 hover:border-rose-200'}`}>
                                 <input
                                     type="checkbox"
-                                    className="w-5 h-5 accent-destructive rounded outline-none"
+                                    className="w-6 h-6 accent-rose-500 rounded-lg outline-none hidden"
                                     checked={unableToAssess}
                                     onChange={(e) => {
                                         setUnableToAssess(e.target.checked);
@@ -248,19 +267,25 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                                         }
                                     }}
                                 />
+                                <div className={cn(
+                                    "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
+                                    unableToAssess ? "bg-white border-white scale-110" : "bg-white border-slate-300 group-hover:border-rose-400"
+                                )}>
+                                    {unableToAssess && <X className="w-4 h-4 text-rose-600" />}
+                                </div>
                                 <div>
-                                    <span className={`font-bold block ${unableToAssess ? 'text-destructive' : 'text-foreground'}`}>Unable to Assess</span>
-                                    <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Symptom is incomplete or incomprehensible.</p>
+                                    <span className={cn("font-bold text-xs uppercase tracking-widest block", unableToAssess ? "text-white" : "text-slate-900")}>Unable to Assess</span>
+                                    {!unableToAssess && <p className="text-[10px] text-slate-400 leading-tight mt-0.5">Incomplete or incomprehensible input.</p>}
                                 </div>
                             </label>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Clinical Note</label>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Case Notes</label>
                                 <textarea
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
-                                    className="w-full h-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-none text-sm placeholder:text-slate-400"
-                                    placeholder="Add clinical context..."
+                                    className="w-full h-40 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50 outline-none transition-all resize-none text-sm placeholder:text-slate-300 shadow-inner"
+                                    placeholder="Enter clinical observations or reasoning..."
                                 />
                             </div>
                         </div>
@@ -269,22 +294,18 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                             <button
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-white p-5 rounded-xl font-bold flex flex-col items-center justify-center gap-1 shadow-lg shadow-primary/20 transition-all hover:translate-y-[-2px] active:translate-y-[0px]"
+                                className="w-full bg-slate-900 hover:bg-black disabled:bg-slate-100 disabled:text-slate-400 text-white p-6 rounded-2xl font-black flex flex-col items-center justify-center gap-1 shadow-24 transition-all hover:translate-y-[-4px] active:translate-y-[0px] active:scale-95"
                             >
-                                {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+                                {submitting ? <Loader2 className="w-8 h-8 animate-spin" /> : (
                                     <>
-                                        <div className="flex items-center gap-2">
-                                            <CheckCircle2 className="w-5 h-5" />
-                                            <span>Submit Record</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-lg uppercase tracking-tighter font-poppins font-bold">Commit Record</span>
+                                            <ArrowRight className="w-5 h-5" />
                                         </div>
-                                        <span className="text-[10px] opacity-70 font-normal">Saves and loads next available</span>
+                                        <span className="text-[9px] opacity-50 font-medium uppercase tracking-[0.2em] mt-1 text-center">Submit & Load Next</span>
                                     </>
                                 )}
                             </button>
-
-                            <p className="text-[10px] text-center mt-4 text-muted-foreground">
-                                Your work is auto-saved every 30 seconds.
-                            </p>
                         </div>
                     </div>
                 </div>

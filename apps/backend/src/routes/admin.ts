@@ -337,14 +337,29 @@ router.get('/dataset/export', async (req, res) => {
 
         // Create a CSV header
         const csvRows = ['id,symptom_text,doctor_name,doctor_email,clinical_note,unable_to_assess,AI_medicine,DOC_medicine,AI_neurology,DOC_neurology'];
+        verifiedRecords.forEach(v => {
+            const r = v.record as any;
+            const d = v.doctor as any;
+            const doc_depts = v.verified_departments as any;
 
-        // Simplification for the example, we should map all 17 departments
-        // ...
+            const row = [
+                r.id,
+                `"${r.symptom_text.replace(/"/g, '""')}"`,
+                d.name,
+                d.email,
+                `"${(v.clinical_note || '').replace(/"/g, '""')}"`,
+                v.is_unable_to_assess,
+                r.departments, // AI side
+                Object.entries(doc_depts).filter(([_, val]) => val).map(([key]) => key).join('|') // Doctor side
+            ].join(',');
+            csvRows.push(row);
+        });
 
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', 'attachment; filename="verified_triage_dataset.csv"');
         res.send(csvRows.join('\n'));
     } catch (error) {
+        console.error('Export error:', error);
         res.status(500).json({ message: 'Export failed' });
     }
 });

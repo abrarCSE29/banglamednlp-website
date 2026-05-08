@@ -54,46 +54,46 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="glass-panel p-6 rounded-xl flex items-center gap-4">
-                    <div className="p-4 bg-primary/20 text-primary rounded-full">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group">
+                    <div className="p-4 bg-indigo-50 text-indigo-500 rounded-2xl group-hover:bg-indigo-500 group-hover:text-white transition-all">
                         <FileStack className="w-8 h-8" />
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">Total Records</p>
-                        <h3 className="text-2xl font-bold">{stats?.totalRecords || 0}</h3>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total Records</p>
+                        <h3 className="text-2xl font-black text-slate-900 leading-none mt-1">{stats?.totalRecords || 0}</h3>
                     </div>
                 </div>
 
-                <div className="glass-panel p-6 rounded-xl flex items-center gap-4">
-                    <div className="p-4 bg-emerald-500/20 text-emerald-500 rounded-full">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group">
+                    <div className="p-4 bg-emerald-50 text-emerald-500 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all">
                         <CheckCircle2 className="w-8 h-8" />
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">Verified Records</p>
-                        <h3 className="text-2xl font-bold">{stats?.verifiedRecords || 0}</h3>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Verified Records</p>
+                        <h3 className="text-2xl font-black text-slate-900 leading-none mt-1">{stats?.verifiedRecords || 0}</h3>
                     </div>
                 </div>
 
-                <div className="glass-panel p-6 rounded-xl flex items-center gap-4">
-                    <div className="p-4 bg-amber-500/20 text-amber-500 rounded-full">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group">
+                    <div className="p-4 bg-amber-50 text-amber-500 rounded-2xl group-hover:bg-amber-500 group-hover:text-white transition-all">
                         <Users className="w-8 h-8" />
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">Active Doctors</p>
-                        <h3 className="text-2xl font-bold">{stats?.doctors.filter(d => d.is_active).length || 0}</h3>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Active Doctors</p>
+                        <h3 className="text-2xl font-black text-slate-900 leading-none mt-1">{stats?.doctors.filter(d => d.is_active).length || 0}</h3>
                     </div>
                 </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="glass-panel p-6 rounded-xl">
-                <div className="flex justify-between items-end mb-2">
-                    <h3 className="font-semibold text-lg">Overall Progress</h3>
-                    <span className="text-xl font-bold text-primary">{completionPercentage}%</span>
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-end mb-4">
+                    <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">System Progress</h3>
+                    <span className="text-2xl font-black text-indigo-600">{completionPercentage}%</span>
                 </div>
-                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                <div className="w-full h-5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                     <div
-                        className="h-full bg-primary transition-all duration-1000 ease-out"
+                        className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all duration-1000 ease-out"
                         style={{ width: `${completionPercentage}%` }}
                     />
                 </div>

@@ -5,11 +5,20 @@ const api = axios.create({
     withCredentials: true,
 });
 
+if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+}
+
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        const isLoginRequest = originalRequest.url?.includes('/auth/login');
+
+        if (error.response?.status === 401 && !originalRequest._retry && !isLoginRequest) {
             originalRequest._retry = true;
             try {
                 const response = await axios.post(

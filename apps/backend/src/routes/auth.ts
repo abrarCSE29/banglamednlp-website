@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { authenticateJWT } from '../middleware/auth.middleware';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -122,8 +123,16 @@ router.post('/refresh', async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-    res.clearCookie('refreshToken');
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
     res.json({ message: 'Logged out successfully' });
+});
+
+router.get('/me', authenticateJWT, (req: any, res) => {
+    res.json({ user: req.user });
 });
 
 export default router;
