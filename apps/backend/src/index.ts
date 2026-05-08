@@ -35,6 +35,6 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/doctor', doctorRoutes);
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`Backend server listening on port ${PORT}`);
+app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`Backend server listening on port ${PORT} (all interfaces)`);
 });

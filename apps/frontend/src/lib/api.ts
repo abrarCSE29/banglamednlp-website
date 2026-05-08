@@ -1,7 +1,19 @@
 import axios from 'axios';
 
+// Dynamically resolve backend host so phone browsers work on local network
+function getBaseURL() {
+    if (typeof window !== 'undefined') {
+        const host = window.location.hostname;
+        // If not localhost, use the same host (e.g. 192.168.0.106) at port 3001
+        if (host !== 'localhost' && host !== '127.0.0.1') {
+            return `http://${host}:3001/api`;
+        }
+    }
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+}
+
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+    baseURL: getBaseURL(),
     withCredentials: true,
 });
 
