@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+.next
+dist
+build
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Databases/ORM
+prisma/.env
+/apps/backend/prisma/dev.db
+/apps/backend/prisma/dev.db-journal
+
+# User specific request: Exclude knowledge folder
+knowledge/
+
+# System
+.DS_Store
+Thumbs.db

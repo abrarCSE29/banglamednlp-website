@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+}
+
+model User {
+  id                 Int               @id @default(autoincrement())
+  name               String
+  email              String            @unique
+  password_hash      String
+  role               Role              @default(DOCTOR)
+  specialty          String?
+  institution        String?
+  is_active          Boolean           @default(true)
+  failed_login_count Int               @default(0)
+  locked_at          DateTime?
+  created_at         DateTime          @default(now())
+  last_login_at      DateTime?
+  
+  verifications      Verification[]
+  assigned_records   DoctorAssignment[]
+  uploads            DatasetUpload[]
+  login_audits       LoginAudit[]
+  
+  @@map("users")
+}
+
+model TriageRecord {
+  id              Int               @id // Not autoincrement, from CSV
+  symptom_text    String
+  departments     String
+  num_labels      Int
+  dataset_version String?
+  created_at      DateTime          @default(now())
+
+  // 17 AI-assigned binary departments
+  medicine        Int @default(0)
+  neurology       Int @default(0)
+  surgery         Int @default(0)
+  gastroenterology Int @default(0)
+  pediatrics      Int @default(0)
+  cardiology      Int @default(0)
+  ent             Int @default(0)
+  orthopedics     Int @default(0)
+  endocrinology   Int @default(0)
+  nephrology      Int @default(0)
+  psychiatry      Int @default(0)
+  dermatology     Int @default(0)
+  pulmonology     Int @default(0)
+  ophthalmology   Int @default(0)
+  hematology      Int @default(0)
+  urology         Int @default(0)
+  gynecology      Int @default(0)
+  rheumatology    Int @default(0)
+
+  verifications   Verification[]
+  assignments     DoctorAssignment[]
+
+  @@map("triage_records")
+}
+
+model Verification {
+  id                  Int          @id @default(autoincrement())
+  record_id           Int
+  doctor_id           Int
+  verified_departments Json
+  clinical_note       String?
+  is_unable_to_assess Boolean      @default(false)
+  draft               Json?
+  submitted_at        DateTime     @default(now())
+  updated_at          DateTime     @updatedAt
+
+  record              TriageRecord @relation(fields: [record_id], references: [id])
+  doctor              User         @relation(fields: [doctor_id], references: [id])
+
+  @@unique([record_id, doctor_id])
+  @@map("verifications")
+}
+
+model DatasetUpload {
+  id               Int      @id @default(autoincrement())
+  filename         String
+  uploaded_by      Int
+  record_count     Int
+  upload_timestamp DateTime @default(now())
+  version_tag      String?
+
+  admin            User     @relation(fields: [uploaded_by], references: [id])
+  
+  @@map("dataset_uploads")
+}
+
+model LoginAudit {
+  id          Int      @id @default(autoincrement())
+  user_id     Int?
+  email       String
+  ip_address  String?
+  success     Boolean
+  created_at  DateTime @default(now())
+
+  user        User?    @relation(fields: [user_id], references: [id])
+
+  @@map("login_audit")
+}
+
+model DoctorAssignment {
+  id        Int          @id @default(autoincrement())
+  doctor_id Int
+  record_id Int
+
+  doctor    User         @relation(fields: [doctor_id], references: [id])
+  record    TriageRecord @relation(fields: [record_id], references: [id])
+
+  @@unique([doctor_id, record_id])
+  @@map("doctor_assignments")
+}
