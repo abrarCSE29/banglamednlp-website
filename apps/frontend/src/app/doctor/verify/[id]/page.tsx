@@ -27,6 +27,8 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
     const [aiSuggestions, setAiSuggestions] = useState<Record<string, boolean>>({});
     const [note, setNote] = useState('');
     const [unableToAssess, setUnableToAssess] = useState(false);
+    const [countdown, setCountdown] = useState(10);
+    const [progress, setProgress] = useState({ completed: 0, total: 0 });
 
     // Poll timer ref
     const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -67,12 +69,31 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
             }
         };
 
+        const fetchProgress = async () => {
+            try {
+                const { data } = await api.get('/doctor/progress') as { data: any };
+                setProgress({ completed: data.verifiedCount, total: data.totalRecords });
+            } catch (e) { }
+        };
+
         fetchRecord();
+        fetchProgress();
+        setCountdown(10);
 
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
     }, [id, router]);
+
+    // Countdown timer
+    useEffect(() => {
+        if (countdown <= 0) return;
+        const interval = setInterval(() => {
+            setCountdown(prev => prev - 1);
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [countdown]);
+
 
     // Auto-save draft every 30 seconds
     useEffect(() => {
@@ -161,7 +182,8 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                 </button>
                 <div className="text-[10px] font-bold text-slate-400 flex items-center gap-4 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
                     {savingDraft && <span className="text-emerald-500 animate-pulse flex items-center gap-1.5"><Save className="w-3.5 h-3.5" /> Synchronizing Draft...</span>}
-                    <span className="uppercase tracking-widest">Protocol ID: <span className="text-slate-900">#TR-{record?.id}</span></span>
+                    <span className="uppercase tracking-widest text-indigo-600">Verification Progress: <span className="text-slate-900">{progress.completed} / {progress.total}</span></span>
+                    <span className="uppercase tracking-widest border-l border-slate-200 pl-4">Protocol ID: <span className="text-slate-900">#TR-{record?.id}</span></span>
                 </div>
             </div>
 
@@ -293,14 +315,16 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                         <div className="pt-2">
                             <button
                                 onClick={handleSubmit}
-                                disabled={submitting}
+                                disabled={submitting || countdown > 0}
                                 className="w-full bg-slate-900 hover:bg-black disabled:bg-slate-100 disabled:text-slate-400 text-white p-6 rounded-2xl font-black flex flex-col items-center justify-center gap-1 shadow-24 transition-all hover:translate-y-[-4px] active:translate-y-[0px] active:scale-95"
                             >
                                 {submitting ? <Loader2 className="w-8 h-8 animate-spin" /> : (
                                     <>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-lg uppercase tracking-tighter font-poppins font-bold">Commit Record</span>
-                                            <ArrowRight className="w-5 h-5" />
+                                            <span className="text-lg uppercase tracking-tighter font-poppins font-bold">
+                                                {countdown > 0 ? `Reviewing... (${countdown}s)` : 'Commit Record'}
+                                            </span>
+                                            {countdown <= 0 && <ArrowRight className="w-5 h-5" />}
                                         </div>
                                         <span className="text-[9px] opacity-50 font-medium uppercase tracking-[0.2em] mt-1 text-center">Submit & Load Next</span>
                                     </>
