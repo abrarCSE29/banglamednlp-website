@@ -10,6 +10,7 @@ import { authenticateJWT, requireAdmin } from '../middleware/auth.middleware';
 const router = express.Router();
 const prisma = new PrismaClient();
 const upload = multer({ limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit
+const DOCTOR_PORTAL_URL = 'https://banglamednlp.abrarhameem.me';
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'localhost',
@@ -218,7 +219,7 @@ router.post('/doctors', async (req, res) => {
       <p>Your account has been created. Please log in using the temporary credentials below:</p>
       <p><strong>Email:</strong> ${email}<br/>
       <strong>Temporary Password:</strong> ${tempPassword}</p>
-      <p>You can access the portal here: <a href="${process.env.FRONTEND_URL}">${process.env.FRONTEND_URL}</a></p>
+            <p>You can access the portal here: <a href="${DOCTOR_PORTAL_URL}">${DOCTOR_PORTAL_URL}</a></p>
       <p>You will be required to change your password upon first login.</p>
     `;
 
@@ -299,6 +300,7 @@ router.post('/doctors/:id/resend-email', async (req, res) => {
                 <p>Your password has been reset by an administrator. Please log in using the temporary credentials below:</p>
                 <p><strong>Email:</strong> ${doctor.email}<br/>
                 <strong>Temporary Password:</strong> ${tempPassword}</p>
+                <p>You can access the portal here: <a href="${DOCTOR_PORTAL_URL}">${DOCTOR_PORTAL_URL}</a></p>
             `,
                         envelope: { from: SMTP_FROM_ADDRESS, to: doctor.email }
                 });
