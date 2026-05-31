@@ -9,7 +9,9 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
     if (typeof window !== 'undefined') {
         const host = window.location.hostname;
-        if (host !== 'localhost' && host !== '127.0.0.1') {
+        // Only rewrite host in local development for LAN device testing.
+        // In production (Vercel), preserve NEXT_PUBLIC_API_URL.
+        if (process.env.NODE_ENV !== 'production' && host !== 'localhost' && host !== '127.0.0.1') {
             config.baseURL = `http://${host}:3001/api`;
         }
     }
