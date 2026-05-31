@@ -10,15 +10,23 @@ dotenv.config();
 
 const app = express();
 
-const FRONTEND_URL = (process.env.FRONTEND_URL ?? '*') as string;
-// Expose the configured FRONTEND_URL in logs to help debug production env values
-console.log('FRONTEND_URL=', FRONTEND_URL);
+const rawFrontendOrigins = [process.env.FRONTEND_URLS, process.env.FRONTEND_URL]
+    .filter(Boolean)
+    .join(',');
+
+const allowedOrigins = rawFrontendOrigins
+    ? rawFrontendOrigins.split(',').map((origin) => origin.trim().replace(/\/$/, '')).filter(Boolean)
+    : ['*'];
+
+// Expose the configured FRONTEND_URL(S) in logs to help debug production env values.
+console.log('ALLOWED_FRONTEND_ORIGINS=', allowedOrigins.join(','));
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (FRONTEND_URL === '*') return callback(null, true);
-        const allowed = FRONTEND_URL.split(',').map(s => s.trim().replace(/\/$/, ''));
-        if (!origin || allowed.includes((origin as string).replace(/\/$/, ''))) {
+        if (allowedOrigins.includes('*')) return callback(null, true);
+
+        const normalizedOrigin = origin?.replace(/\/$/, '');
+        if (!normalizedOrigin || allowedOrigins.includes(normalizedOrigin)) {
             return callback(null, true);
         }
         return callback(new Error('Not allowed by CORS'));
