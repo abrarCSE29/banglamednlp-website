@@ -36,17 +36,9 @@
 @layer base {
   :root {
     --background: 210 40% 98%;
-    /* Soft Slate white */
     --foreground: 222.2 84% 4.9%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
     --primary: 238.7 83.5% 66.7%;
-    /* Metronic Indigo #6366f1 */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -66,32 +58,18 @@
     --ring: 238.7 83.5% 66.7%;
 
     --radius: 0.75rem;
-
-    /* Metronic Specific */
-    --metronic-dark: 234 16% 15%;
-    /* #1e1e2d */
-    --metronic-gray: 210 40% 96.1%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border tracking-[-0.01em];
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: var(--font-inter), system-ui, sans-serif;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-poppins), system-ui, sans-serif;
-    @apply font-bold tracking-tight text-slate-900;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
