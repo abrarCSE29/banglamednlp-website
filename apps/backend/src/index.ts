@@ -10,22 +10,36 @@ dotenv.config();
 
 const app = express();
 
+const normalizeOrigin = (value: string) => {
+    const trimmed = value.trim().replace(/\/$/, '');
+
+    if (trimmed === '*') {
+        return '*';
+    }
+
+    try {
+        return new URL(trimmed).origin;
+    } catch {
+        return trimmed.replace(/\/[^/]*$/, '');
+    }
+};
+
 const rawFrontendOrigins = [process.env.FRONTEND_URLS, process.env.FRONTEND_URL]
     .filter(Boolean)
     .join(',');
 
 const allowedOrigins = rawFrontendOrigins
-    ? rawFrontendOrigins.split(',').map((origin) => origin.trim().replace(/\/$/, '')).filter(Boolean)
+    ? rawFrontendOrigins.split(',').map(normalizeOrigin).filter(Boolean)
     : ['*'];
 
 // Expose the configured FRONTEND_URL(S) in logs to help debug production env values.
-console.log('ALLOWED_FRONTEND_ORIGINS=', allowedOrigins.join(','));
+console.log('ALLOWED_FRONTEND_ORIGINS=', allowedOrigins);
 
 app.use(cors({
     origin: (origin, callback) => {
         if (allowedOrigins.includes('*')) return callback(null, true);
 
-        const normalizedOrigin = origin?.replace(/\/$/, '');
+        const normalizedOrigin = origin ? normalizeOrigin(origin) : origin;
         if (!normalizedOrigin || allowedOrigins.includes(normalizedOrigin)) {
             return callback(null, true);
         }
