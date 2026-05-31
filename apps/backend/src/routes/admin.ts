@@ -197,8 +197,8 @@ router.post('/doctors', async (req, res) => {
     }
 
     try {
-        // Generate temporary password
-        const tempPassword = crypto.randomBytes(6).toString('hex'); // e.g. 12 chars
+        // Generate temporary 6-digit numeric password (e.g. 123456)
+        const tempPassword = (await crypto.randomInt(100000, 1000000)).toString();
         const passwordHash = await bcrypt.hash(tempPassword, 12);
 
         const doctor = await prisma.user.create({
@@ -283,7 +283,7 @@ router.post('/doctors/:id/resend-email', async (req, res) => {
             return;
         }
 
-        const tempPassword = crypto.randomBytes(6).toString('hex');
+        const tempPassword = (await crypto.randomInt(100000, 1000000)).toString();
         const passwordHash = await bcrypt.hash(tempPassword, 12);
 
         await prisma.user.update({
