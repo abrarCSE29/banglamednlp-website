@@ -13,7 +13,15 @@ const app = express();
 const FRONTEND_URL = process.env.FRONTEND_URL || '*';
 
 app.use(cors({
-    origin: FRONTEND_URL === '*' ? true : FRONTEND_URL,
+    origin: (origin, callback) => {
+        if (FRONTEND_URL === '*') return callback(null, true);
+        const allowed = FRONTEND_URL.split(',').map(s => s.trim().replace(/\/$/, ''));
+        const requestingOrigin = origin?.replace(/\/$/, '');
+        if (!origin || allowed.includes(requestingOrigin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
 }));
 
