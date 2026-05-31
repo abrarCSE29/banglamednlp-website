@@ -72,7 +72,9 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
         const fetchProgress = async () => {
             try {
                 const { data } = await api.get('/doctor/progress') as { data: any };
-                setProgress({ completed: data.verifiedCount, total: data.totalRecords });
+                const completed = Number(data.verifiedCount) || 0;
+                const total = Number(data.totalRecords) || 0;
+                setProgress({ completed, total });
             } catch (e) { }
         };
 
@@ -157,6 +159,7 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
             const queueRes = await api.get('/doctor/queue');
             const queueData = queueRes.data as any;
             if (queueData.record) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 router.replace(`/doctor/verify/${queueData.record.id}`);
             } else {
                 router.push('/doctor/dashboard');

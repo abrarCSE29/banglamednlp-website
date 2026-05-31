@@ -128,8 +128,8 @@ export default function AdminDashboard() {
                         </h3>
                         <span className="text-[10px] text-slate-400 font-bold">Target ≥0.75</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden">
-                        <div className={`h-full transition-all duration-1000 ${getStatusColor(stats?.metrics.cohenKappa || 0, 'kappa').replace('text', 'bg')}`} style={{ width: `${(stats?.metrics.cohenKappa || 0) * 100}%` }} />
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden">
+                        <div className={`h-full transition-all duration-1000 ${getStatusColor(stats?.metrics.cohenKappa || 0, 'kappa').replace('text', 'bg')}`} style={{ width: `${(Number(stats?.metrics.cohenKappa) || 0) * 100}%` }} />
                     </div>
                 </div>
             </div>

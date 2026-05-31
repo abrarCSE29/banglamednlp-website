@@ -10,6 +10,18 @@ const nextConfig: NextConfig = {
     "10.0.0.101",
     "10.0.0.106",
   ],
+  async rewrites() {
+    // Proxy /api requests to local backend during development so cookies are same-origin
+    if (process.env.NODE_ENV !== 'production') {
+      return [
+        {
+          source: '/api/:path*',
+          destination: 'http://localhost:3001/api/:path*',
+        },
+      ];
+    }
+    return [];
+  },
 };
 
 export default nextConfig;

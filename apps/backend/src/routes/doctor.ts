@@ -21,7 +21,9 @@ router.get('/progress', async (req: AuthRequest, res) => {
             where: { doctor_id: doctorId }
         });
 
-        res.json({ totalRecords, verifiedCount });
+        const progress = totalRecords > 0 ? Math.round((verifiedCount / totalRecords) * 100) : 0;
+
+        res.json({ totalRecords, verifiedCount, progress });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching progress' });
     }

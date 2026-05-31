@@ -21,6 +21,17 @@ const transporter = nodemailer.createTransport({
     secure: process.env.SMTP_PORT === '465'
 });
 
+// Normalize from header and envelope address for SMTP
+const SMTP_FROM_ADDRESS = process.env.SMTP_FROM_ADDRESS || (() => {
+    const m = (process.env.SMTP_FROM || '').match(/<([^>]+)>/);
+    return m ? m[1] : (process.env.SMTP_FROM || 'no-reply@resend.dev');
+})();
+const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || (() => {
+    const m = (process.env.SMTP_FROM || '').match(/^\s*\"?([^\"<]+)\"?\s*</);
+    return m ? m[1].trim() : 'Verification System';
+})();
+const FROM_HEADER = SMTP_FROM_NAME ? `"${SMTP_FROM_NAME}" <${SMTP_FROM_ADDRESS}>` : SMTP_FROM_ADDRESS;
+
 router.use(authenticateJWT, requireAdmin);
 
 // === DASHBOARD STATS ===
@@ -213,10 +224,11 @@ router.post('/doctors', async (req, res) => {
 
         try {
             await transporter.sendMail({
-                from: '"Verification System" <no-reply@research.com>',
+                from: FROM_HEADER,
                 to: email,
                 subject: 'Your Account Credentials',
-                html: emailHtml
+                html: emailHtml,
+                envelope: { from: SMTP_FROM_ADDRESS, to: email }
             });
         } catch (emailErr) {
             console.error('Email sending failed (Mailhog/SMTP config issue?):', emailErr);
@@ -278,17 +290,18 @@ router.post('/doctors/:id/resend-email', async (req, res) => {
             data: { password_hash: passwordHash }
         });
 
-        await transporter.sendMail({
-            from: '"Verification System" <no-reply@research.com>',
-            to: doctor.email,
-            subject: '[Resend] Your Account Credentials',
-            html: `
-        <p>Hello Dr. ${doctor.name},</p>
-        <p>Your password has been reset by an administrator. Please log in using the temporary credentials below:</p>
-        <p><strong>Email:</strong> ${doctor.email}<br/>
-        <strong>Temporary Password:</strong> ${tempPassword}</p>
-      `
-        });
+                await transporter.sendMail({
+                        from: FROM_HEADER,
+                        to: doctor.email,
+                        subject: '[Resend] Your Account Credentials',
+                        html: `
+                <p>Hello Dr. ${doctor.name},</p>
+                <p>Your password has been reset by an administrator. Please log in using the temporary credentials below:</p>
+                <p><strong>Email:</strong> ${doctor.email}<br/>
+                <strong>Temporary Password:</strong> ${tempPassword}</p>
+            `,
+                        envelope: { from: SMTP_FROM_ADDRESS, to: doctor.email }
+                });
 
         res.json({ message: 'Credentials email resent' });
     } catch (error) {
