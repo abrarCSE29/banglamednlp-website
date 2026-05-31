@@ -39,131 +39,192 @@ const DEPARTMENTS = [
     'hematology', 'urology', 'gynecology', 'rheumatology'
 ] as const;
 
-const verificationRecordSelect = DEPARTMENTS.reduce((acc, dept) => {
-    acc[dept] = true;
-    return acc;
-}, {} as Record<string, true>);
+const SQL_DEPARTMENT_LIST = DEPARTMENTS.map((dept) => `'${dept}'`).join(', ');
+const SQL_AI_DOC_MATCH = DEPARTMENTS
+    .map((dept) => `(r.${dept} = 1) = COALESCE((v.verified_departments::jsonb ->> '${dept}')::boolean, false)`)
+    .join('\n            AND ');
+const SQL_AI_VALUE_CASE = `CASE d.dept ${DEPARTMENTS
+    .map((dept) => `WHEN '${dept}' THEN r.${dept} = 1`)
+    .join(' ')} END`;
+
+const DASHBOARD_METRICS_SQL = `
+WITH verification_rows AS (
+    SELECT
+        v.is_unable_to_assess,
+        (
+            ${SQL_AI_DOC_MATCH}
+            AND NOT EXISTS (
+                SELECT 1
+                FROM jsonb_each_text(v.verified_departments::jsonb) AS e
+                WHERE e.key NOT IN (${SQL_DEPARTMENT_LIST})
+                  AND lower(e.value) = 'true'
+            )
+        ) AS is_exact_match
+    FROM verifications v
+    JOIN triage_records r ON r.id = v.record_id
+),
+overall AS (
+    SELECT
+        COUNT(*)::int AS total_verifications,
+        SUM(CASE WHEN is_unable_to_assess THEN 1 ELSE 0 END)::int AS rejected_count,
+        SUM(CASE WHEN NOT is_unable_to_assess AND is_exact_match THEN 1 ELSE 0 END)::int AS accepted_count
+    FROM verification_rows
+),
+dept_values AS (
+    SELECT
+        d.dept,
+        ${SQL_AI_VALUE_CASE} AS ai_val,
+        COALESCE((v.verified_departments::jsonb ->> d.dept)::boolean, false) AS doc_val
+    FROM verifications v
+    JOIN triage_records r ON r.id = v.record_id
+    CROSS JOIN (VALUES ${DEPARTMENTS.map((dept) => `('${dept}')`).join(', ')}) AS d(dept)
+    WHERE NOT v.is_unable_to_assess
+),
+dept_stats AS (
+    SELECT
+        dept,
+        SUM(CASE WHEN ai_val AND doc_val THEN 1 ELSE 0 END)::float AS tp,
+        SUM(CASE WHEN NOT ai_val AND NOT doc_val THEN 1 ELSE 0 END)::float AS tn,
+        SUM(CASE WHEN NOT ai_val AND doc_val THEN 1 ELSE 0 END)::float AS fp,
+        SUM(CASE WHEN ai_val AND NOT doc_val THEN 1 ELSE 0 END)::float AS fn
+    FROM dept_values
+    GROUP BY dept
+),
+kappa_calc AS (
+    SELECT
+        AVG(
+            CASE
+                WHEN total = 0 THEN NULL
+                WHEN expected = 1 THEN 1
+                ELSE (observed - expected) / (1 - expected)
+            END
+        ) AS cohen_kappa
+    FROM (
+        SELECT
+            (tp + tn + fp + fn) AS total,
+            ((tp + tn) / NULLIF(tp + tn + fp + fn, 0)) AS observed,
+            (
+                ((tp + fn) / NULLIF(tp + tn + fp + fn, 0)) * ((tp + fp) / NULLIF(tp + tn + fp + fn, 0)) +
+                (1 - ((tp + fn) / NULLIF(tp + tn + fp + fn, 0))) * (1 - ((tp + fp) / NULLIF(tp + tn + fp + fn, 0)))
+            ) AS expected
+        FROM dept_stats
+    ) t
+)
+SELECT
+    o.total_verifications,
+    o.accepted_count,
+    GREATEST(o.total_verifications - o.accepted_count - o.rejected_count, 0)::int AS fix_count,
+    o.rejected_count,
+    COALESCE(ROUND(k.cohen_kappa::numeric, 3), 0)::numeric AS cohen_kappa
+FROM overall o
+CROSS JOIN kappa_calc k;
+`;
+
+type DashboardSummaryRow = {
+    total_records: number;
+    verified_records: number;
+    total_assignments: number;
+    assigned_records_count: number;
+};
+
+type DashboardMetricsRow = {
+    total_verifications: number;
+    accepted_count: number;
+    fix_count: number;
+    rejected_count: number;
+    cohen_kappa: number | string;
+};
+
+type DashboardDoctorRow = {
+    id: number;
+    name: string;
+    specialty: string | null;
+    is_active: boolean;
+    verifications_count: number;
+    assigned_records_count: number;
+};
 
 router.use(authenticateJWT, requireAdmin);
 
 // === DASHBOARD STATS ===
 router.get('/dashboard', async (req, res) => {
     try {
-        const [
-            totalRecords,
-            verifiedRecords,
-            totalAssignments,
-            assignedRecordGroups,
-            doctors,
-            verifications
-        ] = await Promise.all([
-            prisma.triageRecord.count(),
-            prisma.verification.count(),
-            prisma.doctorAssignment.count(),
-            prisma.doctorAssignment.groupBy({
-                by: ['record_id']
-            }),
-            prisma.user.findMany({
-                where: { role: 'DOCTOR' },
-                select: {
-                    id: true,
-                    name: true,
-                    specialty: true,
-                    is_active: true,
-                    _count: {
-                        select: {
-                            verifications: true,
-                            assigned_records: true
-                        }
-                    }
-                }
-            }),
-            prisma.verification.findMany({
-                select: {
-                    is_unable_to_assess: true,
-                    verified_departments: true,
-                    record: {
-                        select: verificationRecordSelect
-                    }
-                }
-            })
+        const [summaryRows, doctorsRows, metricsRows] = await Promise.all([
+            prisma.$queryRaw<DashboardSummaryRow[]>`
+                SELECT
+                    (SELECT COUNT(*)::int FROM triage_records) AS total_records,
+                    (SELECT COUNT(*)::int FROM verifications) AS verified_records,
+                    (SELECT COUNT(*)::int FROM doctor_assignments) AS total_assignments,
+                    (SELECT COUNT(DISTINCT record_id)::int FROM doctor_assignments) AS assigned_records_count
+            `,
+            prisma.$queryRaw<DashboardDoctorRow[]>`
+                SELECT
+                    u.id,
+                    u.name,
+                    u.specialty,
+                    u.is_active,
+                    COALESCE(v.verifications_count, 0)::int AS verifications_count,
+                    COALESCE(a.assigned_records_count, 0)::int AS assigned_records_count
+                FROM users u
+                LEFT JOIN (
+                    SELECT doctor_id, COUNT(*)::int AS verifications_count
+                    FROM verifications
+                    GROUP BY doctor_id
+                ) v ON v.doctor_id = u.id
+                LEFT JOIN (
+                    SELECT doctor_id, COUNT(*)::int AS assigned_records_count
+                    FROM doctor_assignments
+                    GROUP BY doctor_id
+                ) a ON a.doctor_id = u.id
+                WHERE u.role = 'DOCTOR'::"Role"
+            `,
+            prisma.$queryRawUnsafe<DashboardMetricsRow[]>(DASHBOARD_METRICS_SQL)
         ]);
 
-        const assignedRecordsCount = assignedRecordGroups.length;
+        const summary = summaryRows[0] ?? {
+            total_records: 0,
+            verified_records: 0,
+            total_assignments: 0,
+            assigned_records_count: 0
+        };
+        const metricsRow = metricsRows[0] ?? {
+            total_verifications: 0,
+            accepted_count: 0,
+            fix_count: 0,
+            rejected_count: 0,
+            cohen_kappa: 0
+        };
 
-        const totalVerifications = verifications.length;
-        let acceptedCount = 0;
-        let fixCount = 0;
-        let rejectedCount = 0;
-
-        // Track agreement for Kappa (Macro-average over departments)
-        let totalKappa = 0;
-        let validKappaDepartments = 0;
-
-        if (totalVerifications > 0) {
-            verifications.forEach(v => {
-                if (v.is_unable_to_assess) {
-                    rejectedCount++;
-                    return;
-                }
-
-                const aiDepts = DEPARTMENTS.filter(d => (v.record as any)[d] === 1).sort();
-                const docDeptsDict = v.verified_departments as Record<string, boolean>;
-                const docDepts = Object.entries(docDeptsDict)
-                    .filter(([_, val]) => val)
-                    .map(([key]) => key)
-                    .sort();
-
-                if (aiDepts.join('|') === docDepts.join('|')) {
-                    acceptedCount++;
-                } else {
-                    fixCount++;
-                }
-            });
-
-            // Kappa Calculation (Simplified Multi-label approach: calculate per department and average)
-            DEPARTMENTS.forEach(dept => {
-                let TP = 0, TN = 0, FP = 0, FN = 0;
-                verifications.forEach(v => {
-                    if (v.is_unable_to_assess) return;
-                    const aiVal = (v.record as any)[dept] === 1;
-                    const docVal = !!(v.verified_departments as any)[dept];
-
-                    if (aiVal && docVal) TP++;
-                    else if (!aiVal && !docVal) TN++;
-                    else if (!aiVal && docVal) FP++;
-                    else if (aiVal && !docVal) FN++;
-                });
-
-                const total = TP + TN + FP + FN;
-                if (total === 0) return;
-
-                const observedAgreement = (TP + TN) / total;
-                const aiPositiveRate = (TP + FN) / total;
-                const docPositiveRate = (TP + FP) / total;
-                const expectedAgreement = (aiPositiveRate * docPositiveRate) + ((1 - aiPositiveRate) * (1 - docPositiveRate));
-
-                // If expectedAgreement is 1, kappa is indeterminate or 1? Handle denumerator.
-                const kappa = (expectedAgreement === 1) ? 1 : (observedAgreement - expectedAgreement) / (1 - expectedAgreement);
-
-                if (!isNaN(kappa)) {
-                    totalKappa += kappa;
-                    validKappaDepartments++;
-                }
-            });
-        }
+        const totalVerifications = Number(metricsRow.total_verifications ?? 0);
+        const acceptedCount = Number(metricsRow.accepted_count ?? 0);
+        const fixCount = Number(metricsRow.fix_count ?? 0);
+        const rejectedCount = Number(metricsRow.rejected_count ?? 0);
 
         const metrics = {
             acceptanceRate: totalVerifications ? Math.round((acceptedCount / totalVerifications) * 100) : 0,
             fixRate: totalVerifications ? Math.round((fixCount / totalVerifications) * 100) : 0,
             rejectionRate: totalVerifications ? Math.round((rejectedCount / totalVerifications) * 100) : 0,
-            cohenKappa: validKappaDepartments ? parseFloat((totalKappa / validKappaDepartments).toFixed(3)) : 0
+            cohenKappa: Number(metricsRow.cohen_kappa ?? 0)
         };
+
+        const doctors = doctorsRows.map((doctor) => ({
+            id: Number(doctor.id),
+            name: doctor.name,
+            specialty: doctor.specialty ?? 'N/A',
+            is_active: doctor.is_active,
+            _count: {
+                verifications: Number(doctor.verifications_count),
+                assigned_records: Number(doctor.assigned_records_count)
+            }
+        }));
+
+        const totalRecords = Number(summary.total_records ?? 0);
+        const assignedRecordsCount = Number(summary.assigned_records_count ?? 0);
 
         res.json({
             totalRecords,
-            verifiedRecords,
-            totalAssignments,
+            verifiedRecords: Number(summary.verified_records ?? 0),
+            totalAssignments: Number(summary.total_assignments ?? 0),
             assignedRecordsCount,
             unassignedRecordsCount: totalRecords - assignedRecordsCount,
             doctors,
