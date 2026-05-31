@@ -32,54 +32,69 @@ const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || (() => {
     return m ? m[1].trim() : 'Verification System';
 })();
 const FROM_HEADER = SMTP_FROM_NAME ? `"${SMTP_FROM_NAME}" <${SMTP_FROM_ADDRESS}>` : SMTP_FROM_ADDRESS;
+const DEPARTMENTS = [
+    'medicine', 'neurology', 'surgery', 'gastroenterology', 'pediatrics',
+    'cardiology', 'ent', 'orthopedics', 'endocrinology', 'nephrology',
+    'psychiatry', 'dermatology', 'pulmonology', 'ophthalmology',
+    'hematology', 'urology', 'gynecology', 'rheumatology'
+] as const;
+
+const verificationRecordSelect = DEPARTMENTS.reduce((acc, dept) => {
+    acc[dept] = true;
+    return acc;
+}, {} as Record<string, true>);
 
 router.use(authenticateJWT, requireAdmin);
 
 // === DASHBOARD STATS ===
 router.get('/dashboard', async (req, res) => {
     try {
-        const totalRecords = await prisma.triageRecord.count();
-        const verifiedRecords = await prisma.verification.count();
-        const totalAssignments = await prisma.doctorAssignment.count();
-
-        // Get unique records that have at least one assignment
-        const assignedRecordsCount = await prisma.doctorAssignment.groupBy({
-            by: ['record_id'],
-            _count: true
-        }).then(res => res.length);
-
-        const doctors = await prisma.user.findMany({
-            where: { role: 'DOCTOR' },
-            select: {
-                id: true,
-                name: true,
-                specialty: true,
-                is_active: true,
-                _count: {
-                    select: {
-                        verifications: true,
-                        assigned_records: true
+        const [
+            totalRecords,
+            verifiedRecords,
+            totalAssignments,
+            assignedRecordGroups,
+            doctors,
+            verifications
+        ] = await Promise.all([
+            prisma.triageRecord.count(),
+            prisma.verification.count(),
+            prisma.doctorAssignment.count(),
+            prisma.doctorAssignment.groupBy({
+                by: ['record_id']
+            }),
+            prisma.user.findMany({
+                where: { role: 'DOCTOR' },
+                select: {
+                    id: true,
+                    name: true,
+                    specialty: true,
+                    is_active: true,
+                    _count: {
+                        select: {
+                            verifications: true,
+                            assigned_records: true
+                        }
                     }
                 }
-            }
-        });
+            }),
+            prisma.verification.findMany({
+                select: {
+                    is_unable_to_assess: true,
+                    verified_departments: true,
+                    record: {
+                        select: verificationRecordSelect
+                    }
+                }
+            })
+        ]);
 
-        // === DATASET QUALITY METRICS ===
-        const verifications = await prisma.verification.findMany({
-            include: { record: true }
-        });
+        const assignedRecordsCount = assignedRecordGroups.length;
 
         const totalVerifications = verifications.length;
         let acceptedCount = 0;
         let fixCount = 0;
         let rejectedCount = 0;
-
-        const DEPARTMENTS = [
-            'medicine', 'neurology', 'surgery', 'gastroenterology', 'pediatrics',
-            'cardiology', 'ent', 'orthopedics', 'endocrinology', 'nephrology',
-            'psychiatry', 'dermatology', 'pulmonology', 'ophthalmology',
-            'hematology', 'urology', 'gynecology', 'rheumatology'
-        ];
 
         // Track agreement for Kappa (Macro-average over departments)
         let totalKappa = 0;
@@ -99,7 +114,7 @@ router.get('/dashboard', async (req, res) => {
                     .map(([key]) => key)
                     .sort();
 
-                if (JSON.stringify(aiDepts) === JSON.stringify(docDepts)) {
+                if (aiDepts.join('|') === docDepts.join('|')) {
                     acceptedCount++;
                 } else {
                     fixCount++;
