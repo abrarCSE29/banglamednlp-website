@@ -9,6 +9,15 @@ const prisma = new PrismaClient();
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_DURATION_MINS = 15;
+const isProduction = process.env.NODE_ENV === 'production';
+
+const refreshCookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+};
 
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
@@ -79,12 +88,7 @@ router.post('/login', async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: false,  // must be false for HTTP on local network
-            sameSite: 'lax', // 'strict' breaks cross-origin IP access on mobile
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-        });
+        res.cookie('refreshToken', refreshToken, refreshCookieOptions);
 
         res.json({ accessToken, role: user.role, name: user.name });
     } catch (error) {
@@ -125,8 +129,9 @@ router.post('/refresh', async (req, res) => {
 router.post('/logout', (req, res) => {
     res.clearCookie('refreshToken', {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax'
+        secure: isProduction,
+        sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+        path: '/'
     });
     res.json({ message: 'Logged out successfully' });
 });
