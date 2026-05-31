@@ -11,6 +11,8 @@ dotenv.config();
 const app = express();
 
 const FRONTEND_URL = (process.env.FRONTEND_URL ?? '*') as string;
+// Expose the configured FRONTEND_URL in logs to help debug production env values
+console.log('FRONTEND_URL=', FRONTEND_URL);
 
 app.use(cors({
     origin: (origin, callback) => {
