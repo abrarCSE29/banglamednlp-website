@@ -31,7 +31,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
     };
 
     return (
-        <header className="h-[75px] bg-white border-b border-slate-200 sticky top-0 z-40 flex items-center px-8 justify-between shadow-sm">
+        <header className="h-14 md:h-[75px] bg-white border-b border-slate-200 sticky top-0 z-40 flex items-center px-4 md:px-8 justify-between shadow-sm">
             {/* Left section: Hamburger on mobile + Search on desktop */}
             <div className="flex items-center gap-3">
                 <button
@@ -57,7 +57,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
                     <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
                 </button>
 
-                <div className="h-8 w-[1px] bg-slate-200 mx-2" />
+                <div className="h-8 w-[1px] bg-slate-200 mx-2 hidden sm:block" />
 
                 <div className="relative">
                     <button
@@ -68,7 +68,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
                             <div className="text-[13px] font-bold text-slate-900 leading-tight font-poppins">{user?.name || user?.email?.split('@')[0] || 'Physician'}</div>
                             <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">{user?.role || 'User'}</div>
                         </div>
-                        <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-bold border border-indigo-100 group-hover:scale-105 transition-transform">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-bold border border-indigo-100 group-hover:scale-105 transition-transform">
                             {(user?.name?.[0] || user?.email?.[0] || 'P').toUpperCase()}
                         </div>
                         <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200", showDropdown && "rotate-180")} />

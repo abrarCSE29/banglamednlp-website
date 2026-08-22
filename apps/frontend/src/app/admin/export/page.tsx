@@ -42,13 +42,13 @@ export default function ExportPage() {
     return (
         <div className="space-y-8 w-full max-w-4xl">
             <div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Export Corpus</h1>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">Export Corpus</h1>
                 <p className="text-slate-500 mt-1">Download the fully verified gold-standard medical dataset.</p>
             </div>
 
-            <div className="bg-white p-12 rounded-3xl flex flex-col items-center justify-center space-y-8 shadow-sm border border-slate-200 text-center">
-                <div className="w-24 h-24 bg-indigo-50 rounded-3xl flex items-center justify-center border border-indigo-100 shadow-inner">
-                    <DownloadCloud className="w-12 h-12 text-indigo-600" />
+            <div className="bg-white p-6 md:p-12 rounded-3xl flex flex-col items-center justify-center space-y-8 shadow-sm border border-slate-200 text-center">
+                <div className="w-16 h-16 md:w-24 md:h-24 bg-indigo-50 rounded-3xl flex items-center justify-center border border-indigo-100 shadow-inner">
+                    <DownloadCloud className="w-8 h-8 md:w-12 md:h-12 text-indigo-600" />
                 </div>
 
                 <div className="max-w-md space-y-3">
@@ -61,7 +61,7 @@ export default function ExportPage() {
                 <button
                     onClick={handleExport}
                     disabled={isExporting}
-                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 text-white px-10 py-4 rounded-xl font-black transition-all shadow-xl shadow-indigo-200 active:scale-95 flex items-center gap-3 uppercase tracking-widest text-xs"
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 text-white px-6 md:px-10 py-3 md:py-4 rounded-xl font-black transition-all shadow-xl shadow-indigo-200 active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-xs w-full sm:w-auto"
                 >
                     {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <DownloadCloud className="w-5 h-5" />}
                     {isExporting ? 'Preparing File...' : 'Download CSV Archive'}

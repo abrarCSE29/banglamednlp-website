@@ -30,7 +30,11 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
     const [countdown, setCountdown] = useState(10);
     const [progress, setProgress] = useState({ completed: 0, total: 0 });
 
-    // Poll timer ref
+    // Draft tracking refs — avoid restarting interval on every keystroke
+    const selectionsRef = useRef<Record<string, boolean>>({});
+    const noteRef = useRef('');
+    const unableToAssessRef = useRef(false);
+    const lastSavedRef = useRef<string>('');
     const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
     useEffect(() => {
@@ -61,6 +65,7 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                 }
 
                 setSelections(initialSelections);
+                lastSavedRef.current = JSON.stringify({ d: initialSelections, n: data.verification?.clinical_note || '', u: data.verification?.is_unable_to_assess || false });
             } catch (error) {
                 toast.error('Failed to load record');
                 router.push('/doctor/dashboard');
@@ -96,17 +101,28 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
         return () => clearInterval(interval);
     }, [countdown]);
 
+    // Keep refs in sync with state for the auto-save effect
+    useEffect(() => { selectionsRef.current = selections; }, [selections]);
+    useEffect(() => { noteRef.current = note; }, [note]);
+    useEffect(() => { unableToAssessRef.current = unableToAssess; }, [unableToAssess]);
 
-    // Auto-save draft every 30 seconds
+
+    // Auto-save draft every 30 seconds — uses refs to avoid resetting interval
     useEffect(() => {
         if (loading) return;
 
         timerRef.current = setInterval(async () => {
+            const payload = JSON.stringify({ d: selectionsRef.current, n: noteRef.current, u: unableToAssessRef.current });
+            if (payload === lastSavedRef.current) return;
+
             setSavingDraft(true);
             try {
                 await api.put(`/doctor/verifications/${id}/draft`, {
-                    draft: selections
+                    draft: selectionsRef.current,
+                    clinical_note: noteRef.current,
+                    is_unable_to_assess: unableToAssessRef.current,
                 });
+                lastSavedRef.current = payload;
             } catch (e) { }
             setTimeout(() => setSavingDraft(false), 1500);
         }, 30000);
@@ -114,7 +130,7 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [selections, loading, id]);
+    }, [loading, id]);
 
     const handleCheckbox = (dep: string) => {
         if (unableToAssess) return;
@@ -183,10 +199,10 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                 >
                     <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> <span className="hidden sm:inline">Back to Queue</span><span className="sm:hidden">Back</span>
                 </button>
-                <div className="text-[9px] md:text-[10px] font-bold text-slate-400 flex items-center gap-2 md:gap-4 bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-slate-200 shadow-sm">
+                <div className="text-[9px] md:text-[10px] font-bold text-slate-400 flex items-center gap-1.5 md:gap-4 bg-white px-2 md:px-4 py-1.5 md:py-2 rounded-full border border-slate-200 shadow-sm overflow-hidden">
                     {savingDraft && <span className="text-emerald-500 animate-pulse flex items-center gap-1.5"><Save className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Synchronizing...</span></span>}
                     <span className="uppercase tracking-widest text-indigo-600"><span className="hidden sm:inline">Progress:</span> <span className="text-slate-900">{progress.completed} / {progress.total}</span></span>
-                    <span className="uppercase tracking-widest border-l border-slate-200 pl-2 md:pl-4">ID: <span className="text-slate-900">#{record?.id}</span></span>
+                    <span className="uppercase tracking-widest border-l border-slate-200 pl-2 md:pl-4 hidden sm:inline">ID: <span className="text-slate-900">#{record?.id}</span></span>
                 </div>
             </div>
 
@@ -234,7 +250,7 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                                         key={dep}
                                         onClick={() => handleCheckbox(dep)}
                                         className={cn(
-                                            "group relative flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg md:rounded-xl border transition-all text-left",
+                                            "group relative flex items-center gap-2 md:gap-3 p-2 md:p-3 min-h-[44px] rounded-lg md:rounded-xl border transition-all text-left",
                                             isSelected
                                                 ? "bg-indigo-600 border-transparent text-white shadow-md md:shadow-lg"
                                                 : "bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:bg-slate-50/50",
@@ -275,7 +291,7 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                         <h3 className="font-black text-lg md:text-xl text-slate-900 tracking-tight hidden md:block">Certification</h3>
 
                         <div className="grid grid-cols-1 gap-4">
-                            <label className={`flex items-center gap-3 md:gap-4 p-3 md:p-5 rounded-xl md:rounded-2xl border cursor-pointer transition-all group ${unableToAssess ? 'bg-rose-600 border-transparent text-white shadow-lg' : 'bg-slate-50 border-slate-200 hover:border-rose-200'}`}>
+                            <label className={`flex items-center gap-3 md:gap-4 p-3 md:p-5 min-h-[48px] rounded-xl md:rounded-2xl border cursor-pointer transition-all group ${unableToAssess ? 'bg-rose-600 border-transparent text-white shadow-lg' : 'bg-slate-50 border-slate-200 hover:border-rose-200'}`}>
                                 <input
                                     type="checkbox"
                                     className="hidden"
@@ -316,14 +332,14 @@ export default function VerificationInterface({ params }: { params: Promise<{ id
                             <button
                                 onClick={handleSubmit}
                                 disabled={submitting || countdown > 0}
-                                className="w-full bg-slate-900 hover:bg-black disabled:bg-slate-100 disabled:text-slate-400 text-white p-4 md:p-6 rounded-xl md:rounded-2xl font-black flex flex-col items-center justify-center gap-1 shadow-24 transition-all active:scale-95"
+                                className="w-full min-h-[56px] bg-slate-900 hover:bg-black disabled:bg-slate-100 disabled:text-slate-400 text-white p-4 md:p-6 rounded-xl md:rounded-2xl font-black flex flex-col items-center justify-center gap-1 shadow-24 transition-all active:scale-95"
                             >
                                 {submitting ? <Loader2 className="w-6 h-6 md:w-8 md:h-8 animate-spin" /> : (
                                     <>
                                         <div className="flex items-center gap-2 md:gap-3">
-                                            <span className="text-base md:text-lg uppercase tracking-tighter font-poppins font-bold">
-                                                {countdown > 0 ? `Review... (${countdown}s)` : 'Commit Verify'}
-                                            </span>
+                                    <span className="text-sm md:text-lg uppercase tracking-tighter font-poppins font-bold whitespace-nowrap">
+                                        {countdown > 0 ? `Review... (${countdown}s)` : 'Commit Verify'}
+                                    </span>
                                             {countdown <= 0 && <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />}
                                         </div>
                                     </>

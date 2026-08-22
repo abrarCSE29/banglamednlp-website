@@ -42,7 +42,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
       <div className="w-full max-w-lg z-10">
         <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-200 overflow-hidden">
-          <div className="bg-slate-900 p-12 text-center relative overflow-hidden">
+          <div className="bg-slate-900 p-8 md:p-12 text-center relative overflow-hidden">
             {/* Abstract pattern */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full -translate-y-12 translate-x-12 blur-2xl" />
 
@@ -55,7 +55,7 @@ export default function LoginPage() {
             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-3">Certification Portal</p>
           </div>
 
-          <div className="p-12 space-y-8">
+          <div className="p-8 md:p-12 space-y-8">
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1" htmlFor="email">Work Email</label>

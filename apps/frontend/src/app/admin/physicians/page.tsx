@@ -106,20 +106,21 @@ export default function PhysiciansPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Physician Panel</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Physician Panel</h1>
                     <p className="text-muted-foreground mt-1">Manage annotators and access credentials.</p>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2"
                 >
                     <UserPlus className="w-4 h-4" /> Add Doctor
                 </button>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Desktop Table - md+ */}
+            <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <table className="w-full text-sm text-left">
                     <thead className="bg-slate-50 uppercase text-xs text-muted-foreground">
                         <tr>
@@ -185,10 +186,67 @@ export default function PhysiciansPage() {
                 </table>
             </div>
 
+            {/* Mobile Cards - below md */}
+            <div className="md:hidden space-y-3">
+                {doctors.map(doctor => (
+                    <div key={doctor.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                                <div className="font-medium text-foreground truncate">{doctor.name}</div>
+                                <div className="text-xs text-muted-foreground truncate">{doctor.email}</div>
+                            </div>
+                            <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${doctor.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                {doctor.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                            <span>{doctor.specialty}</span>
+                            {doctor.institution && <span className="text-xs opacity-70"> · {doctor.institution}</span>}
+                        </div>
+                        <div className="flex gap-4 text-xs">
+                            <span className="text-slate-600">Assigned: <strong>{doctor._count.assigned_records}</strong></span>
+                            <span className="text-indigo-600">Verified: <strong>{doctor._count.verifications}</strong></span>
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                            <button
+                                onClick={() => { setSelectedDoctor(doctor); setIsAssignModalOpen(true); }}
+                                className="flex-1 py-2 text-xs font-medium rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                            >
+                                Assign
+                            </button>
+                            <button
+                                onClick={() => handleResend(doctor.id)}
+                                className="flex-1 py-2 text-xs font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                            >
+                                Resend
+                            </button>
+                            {doctor.is_active ? (
+                                <button
+                                    onClick={() => handleDeactivate(doctor.id)}
+                                    className="flex-1 py-2 text-xs font-medium rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                                >
+                                    Disable
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => handleReactivate(doctor.id)}
+                                    className="flex-1 py-2 text-xs font-medium rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                                >
+                                    Enable
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                ))}
+                {doctors.length === 0 && (
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center text-muted-foreground">No doctors found.</div>
+                )}
+            </div>
+
             {/* Create Physician Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsModalOpen(false)}>
-                    <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md shadow-2xl p-8 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md shadow-2xl p-6 sm:p-8 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold text-slate-900">Add New Physician</h2>
                             <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-full transition-all">
@@ -227,7 +285,7 @@ export default function PhysiciansPage() {
             {/* Assign Records Modal */}
             {isAssignModalOpen && selectedDoctor && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsAssignModalOpen(false)}>
-                    <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md shadow-2xl p-8 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md shadow-2xl p-6 sm:p-8 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <div className="space-y-1">
                                 <h2 className="text-2xl font-bold text-slate-900">Assign Records</h2>

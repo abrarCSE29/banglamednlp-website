@@ -72,19 +72,19 @@ export default function AdminDashboard() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard Overview</h1>
                     <p className="text-muted-foreground mt-1">Real-time statistics for dataset verification.</p>
                 </div>
             </div>
 
             {/* Quality Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Acceptance Rate</p>
                     <div className="flex items-baseline gap-2">
-                        <h3 className={`text-3xl font-black ${getStatusColor(stats?.metrics.acceptanceRate || 0, 'acceptance')}`}>
+                        <h3 className={`text-2xl md:text-3xl font-black ${getStatusColor(stats?.metrics.acceptanceRate || 0, 'acceptance')}`}>
                             {stats?.metrics.acceptanceRate || 0}%
                         </h3>
                         <span className="text-[10px] text-slate-400 font-bold">Target ≥80%</span>
@@ -94,10 +94,10 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Doctor Fix Rate</p>
                     <div className="flex items-baseline gap-2">
-                        <h3 className={`text-3xl font-black ${getStatusColor(stats?.metrics.fixRate || 0, 'fix')}`}>
+                        <h3 className={`text-2xl md:text-3xl font-black ${getStatusColor(stats?.metrics.fixRate || 0, 'fix')}`}>
                             {stats?.metrics.fixRate || 0}%
                         </h3>
                         <span className="text-[10px] text-slate-400 font-bold">Target ≤15%</span>
@@ -107,10 +107,10 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Rejection Rate</p>
                     <div className="flex items-baseline gap-2">
-                        <h3 className={`text-3xl font-black ${getStatusColor(stats?.metrics.rejectionRate || 0, 'rejection')}`}>
+                        <h3 className={`text-2xl md:text-3xl font-black ${getStatusColor(stats?.metrics.rejectionRate || 0, 'rejection')}`}>
                             {stats?.metrics.rejectionRate || 0}%
                         </h3>
                         <span className="text-[10px] text-slate-400 font-bold">Target ≤5%</span>
@@ -120,10 +120,10 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cohen's Kappa</p>
                     <div className="flex items-baseline gap-2">
-                        <h3 className={`text-3xl font-black ${getStatusColor(stats?.metrics.cohenKappa || 0, 'kappa')}`}>
+                        <h3 className={`text-2xl md:text-3xl font-black ${getStatusColor(stats?.metrics.cohenKappa || 0, 'kappa')}`}>
                             {stats?.metrics.cohenKappa || 0}
                         </h3>
                         <span className="text-[10px] text-slate-400 font-bold">Target ≥0.75</span>
@@ -134,54 +134,54 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group">
-                    <div className="p-3 bg-indigo-50 text-indigo-500 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                        <FileStack className="w-6 h-6" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
+                    <div className="p-2 md:p-3 bg-indigo-50 text-indigo-500 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                        <FileStack className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
-                        <h3 className="text-xl font-black text-slate-900 leading-none mt-1">{stats?.totalRecords || 0}</h3>
+                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.totalRecords || 0}</h3>
                     </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group">
-                    <div className="p-3 bg-amber-50 text-amber-500 rounded-xl group-hover:bg-amber-500 group-hover:text-white transition-all">
-                        <Users className="w-6 h-6" />
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
+                    <div className="p-2 md:p-3 bg-amber-50 text-amber-500 rounded-xl group-hover:bg-amber-500 group-hover:text-white transition-all">
+                        <Users className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assigned</p>
-                        <h3 className="text-xl font-black text-slate-900 leading-none mt-1">{stats?.assignedRecordsCount || 0}</h3>
+                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.assignedRecordsCount || 0}</h3>
                     </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group">
-                    <div className="p-3 bg-emerald-50 text-emerald-500 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                        <CheckCircle2 className="w-6 h-6" />
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
+                    <div className="p-2 md:p-3 bg-emerald-50 text-emerald-500 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                        <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Verified</p>
-                        <h3 className="text-xl font-black text-slate-900 leading-none mt-1">{stats?.verifiedRecords || 0}</h3>
+                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.verifiedRecords || 0}</h3>
                     </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group">
-                    <div className="p-3 bg-slate-100 text-slate-500 rounded-xl group-hover:bg-slate-800 group-hover:text-white transition-all">
-                        <FileStack className="w-6 h-6 opacity-50" />
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
+                    <div className="p-2 md:p-3 bg-slate-100 text-slate-500 rounded-xl group-hover:bg-slate-800 group-hover:text-white transition-all">
+                        <FileStack className="w-5 h-5 md:w-6 md:h-6 opacity-50" />
                     </div>
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pending</p>
-                        <h3 className="text-xl font-black text-slate-900 leading-none mt-1">{stats?.unassignedRecordsCount || 0}</h3>
+                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.unassignedRecordsCount || 0}</h3>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* System Progress */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full">
+                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm h-full">
                     <div className="flex justify-between items-end mb-4">
                         <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Overall Progress</h3>
-                        <span className="text-xl font-black text-emerald-600">{completionPercentage}%</span>
+                        <span className="text-lg md:text-xl font-black text-emerald-600">{completionPercentage}%</span>
                     </div>
                     <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                         <div
@@ -193,10 +193,10 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Assignment Progress */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full">
+                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm h-full">
                     <div className="flex justify-between items-end mb-4">
                         <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Assignment Coverage</h3>
-                        <span className="text-xl font-black text-indigo-600">{assignmentPercentage}%</span>
+                        <span className="text-lg md:text-xl font-black text-indigo-600">{assignmentPercentage}%</span>
                     </div>
                     <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                         <div
@@ -210,10 +210,12 @@ export default function AdminDashboard() {
 
             {/* Doctor Summary Table */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50">
                     <h3 className="font-semibold text-lg">Physician Workload</h3>
                 </div>
-                <div className="overflow-x-auto">
+
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-muted-foreground bg-slate-50 uppercase text-xs">
                             <tr>
@@ -255,6 +257,40 @@ export default function AdminDashboard() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden divide-y divide-slate-100">
+                    {stats?.doctors
+                        .sort((a, b) => b._count.verifications - a._count.verifications)
+                        .map((doctor) => {
+                            const personalProgress = doctor._count.assigned_records > 0
+                                ? Math.round((doctor._count.verifications / doctor._count.assigned_records) * 100)
+                                : 0;
+                            return (
+                                <div key={doctor.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div>
+                                            <p className="font-medium text-foreground">{doctor.name}</p>
+                                            <p className="text-xs text-muted-foreground">{doctor.specialty || 'N/A'}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-xs font-bold text-slate-400">{personalProgress}%</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <span className="text-xs text-slate-500">Assigned: <span className="font-bold text-slate-600">{doctor._count.assigned_records}</span></span>
+                                        <span className="text-xs text-slate-500">Verified: <span className="font-bold text-indigo-600">{doctor._count.verifications}</span></span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                                        <div className="h-full bg-indigo-500" style={{ width: `${personalProgress}%` }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    {stats?.doctors.length === 0 && (
+                        <div className="p-8 text-center text-muted-foreground">No doctors registered yet.</div>
+                    )}
                 </div>
             </div>
         </div>

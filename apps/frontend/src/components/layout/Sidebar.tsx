@@ -53,7 +53,7 @@ export default function Sidebar({ role, onClose }: { role: 'admin' | 'doctor'; o
             )}
         >
             {/* Logo Section */}
-            <div className="h-[75px] px-6 flex items-center justify-between border-b border-white/5">
+            <div className="h-14 md:h-[75px] px-6 flex items-center justify-between border-b border-white/5">
                 {!isCollapsed && (
                     <div className="font-extrabold text-white text-[15px] tracking-[0.15em] flex items-center gap-3 uppercase">
                         <div className="w-9 h-9 bg-indigo-500 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/20">B</div>
@@ -70,7 +70,7 @@ export default function Sidebar({ role, onClose }: { role: 'admin' | 'doctor'; o
             </div>
 
             {/* Navigation Items */}
-            <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
+            <nav className="flex-1 py-4 md:py-6 px-2 md:px-3 space-y-1 overflow-y-auto">
                 {items.map((item) => {
                     const isActive = pathname.startsWith(item.href);
                     return (

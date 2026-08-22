@@ -124,7 +124,7 @@ export default function DatasetUploadPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Dataset Management</h1>
+                    <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">Dataset Management</h1>
                     <p className="text-slate-500 mt-1">Control your training data sources and system state.</p>
                 </div>
                 <button
@@ -139,7 +139,7 @@ export default function DatasetUploadPage() {
                 {/* Left & Middle Column (2/3): Dataset Information & History */}
                 <div className="lg:col-span-2 space-y-8 text-left">
                     {/* Info Section */}
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm">
                         <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <Info className="w-5 h-5 text-indigo-500" />
                             Data Source Statistics
@@ -164,36 +164,23 @@ export default function DatasetUploadPage() {
 
                     {/* Upload History Section */}
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                             <h2 className="text-xl font-bold text-slate-900">Registered Datasets</h2>
                             <Database className="w-5 h-5 text-slate-400" />
                         </div>
 
                         {uploads.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-slate-50 uppercase text-[10px] font-bold tracking-widest text-slate-500">
-                                        <tr>
-                                            <th className="px-6 py-4">Filename</th>
-                                            <th className="px-6 py-4">Total Rows</th>
-                                            <th className="px-6 py-4">Import Date</th>
-                                            <th className="px-6 py-4 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {uploads.map(u => (
-                                            <tr key={u.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                <td className="px-6 py-4">
+                            <>
+                                {/* Mobile card layout */}
+                                <div className="md:hidden divide-y divide-slate-100">
+                                    {uploads.map(u => (
+                                        <div key={u.id} className="p-4 space-y-2">
+                                            <div className="flex items-start justify-between">
+                                                <div>
                                                     <div className="font-semibold text-slate-900">{u.filename}</div>
                                                     <div className="text-[10px] text-slate-400">By {u.admin.name}</div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="font-bold text-slate-700">{u.record_count.toLocaleString()}</span>
-                                                </td>
-                                                <td className="px-6 py-4 text-slate-500 text-xs text-left">
-                                                    {new Date(u.upload_timestamp).toLocaleDateString()}
-                                                </td>
-                                                <td className="px-6 py-4 text-right space-x-2">
+                                                </div>
+                                                <div className="flex items-center gap-1">
                                                     <button
                                                         onClick={() => fetchPreview(u)}
                                                         className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -208,12 +195,62 @@ export default function DatasetUploadPage() {
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
-                                                </td>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4 text-xs text-slate-500">
+                                                <span><span className="font-bold text-slate-700">{u.record_count.toLocaleString()}</span> records</span>
+                                                <span>{new Date(u.upload_timestamp).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Desktop table layout */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-slate-50 uppercase text-[10px] font-bold tracking-widest text-slate-500">
+                                            <tr>
+                                                <th className="px-6 py-4">Filename</th>
+                                                <th className="px-6 py-4">Total Rows</th>
+                                                <th className="px-6 py-4">Import Date</th>
+                                                <th className="px-6 py-4 text-right">Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {uploads.map(u => (
+                                                <tr key={u.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-semibold text-slate-900">{u.filename}</div>
+                                                        <div className="text-[10px] text-slate-400">By {u.admin.name}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="font-bold text-slate-700">{u.record_count.toLocaleString()}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-500 text-xs text-left">
+                                                        {new Date(u.upload_timestamp).toLocaleDateString()}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right space-x-2">
+                                                        <button
+                                                            onClick={() => fetchPreview(u)}
+                                                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                            title="View Records"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => deleteDataset(u.id)}
+                                                            className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                            title="Delete Source"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </>
                         ) : (
                             <div className="p-12 text-center text-slate-400 italic">No data sources detected in the system.</div>
                         )}
@@ -279,7 +316,7 @@ export default function DatasetUploadPage() {
 
 
 
-                    <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 md:p-6 shadow-sm">
                         <h4 className="text-sm font-bold mb-3 flex items-center gap-2 text-indigo-900">
                             <Database className="w-4 h-4 text-indigo-500" />
                             Schema Requirements
@@ -299,7 +336,7 @@ export default function DatasetUploadPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedUpload(null)} />
                     <div className="relative bg-white w-full max-w-5xl max-h-[85vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-                        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+                        <div className="px-4 py-4 md:px-8 md:py-6 border-b border-slate-100 flex items-center justify-between">
                             <div>
                                 <h3 className="text-2xl font-bold text-slate-900">{selectedUpload.filename}</h3>
                                 <p className="text-sm text-slate-500">Showing up to 50 records from this data source</p>
@@ -311,7 +348,7 @@ export default function DatasetUploadPage() {
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="flex-1 overflow-auto p-8">
+                        <div className="flex-1 overflow-auto p-4 md:p-8">
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-slate-50 sticky top-0 uppercase text-[10px] font-bold tracking-widest text-slate-500 z-10">
                                     <tr>
@@ -341,7 +378,7 @@ export default function DatasetUploadPage() {
                                 </tbody>
                             </table>
                         </div>
-                        <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+                        <div className="px-4 py-3 md:px-8 md:py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
                             <button
                                 onClick={() => setSelectedUpload(null)}
                                 className="px-6 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition-all shadow-sm"
