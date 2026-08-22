@@ -4,11 +4,10 @@ import crypto from 'crypto';
 import multer from 'multer';
 import { parse } from 'csv-parse';
 import nodemailer from 'nodemailer';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { authenticateJWT, requireAdmin } from '../middleware/auth.middleware';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 const upload = multer({ limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit
 const DOCTOR_PORTAL_URL = 'https://banglamednlp.abrarhameem.me';
 
@@ -62,6 +61,7 @@ WITH verification_rows AS (
         ) AS is_exact_match
     FROM verifications v
     JOIN triage_records r ON r.id = v.record_id
+    WHERE v.is_submitted
 ),
 overall AS (
     SELECT
@@ -78,7 +78,7 @@ dept_values AS (
     FROM verifications v
     JOIN triage_records r ON r.id = v.record_id
     CROSS JOIN (VALUES ${DEPARTMENTS.map((dept) => `('${dept}')`).join(', ')}) AS d(dept)
-    WHERE NOT v.is_unable_to_assess
+    WHERE NOT v.is_unable_to_assess AND v.is_submitted
 ),
 dept_stats AS (
     SELECT
@@ -153,7 +153,7 @@ router.get('/dashboard', async (req, res) => {
             prisma.$queryRaw<DashboardSummaryRow[]>`
                 SELECT
                     (SELECT COUNT(*)::int FROM triage_records) AS total_records,
-                    (SELECT COUNT(*)::int FROM verifications) AS verified_records,
+                    (SELECT COUNT(*)::int FROM verifications WHERE is_submitted) AS verified_records,
                     (SELECT COUNT(*)::int FROM doctor_assignments) AS total_assignments,
                     (SELECT COUNT(DISTINCT record_id)::int FROM doctor_assignments) AS assigned_records_count
             `,
@@ -169,6 +169,7 @@ router.get('/dashboard', async (req, res) => {
                 LEFT JOIN (
                     SELECT doctor_id, COUNT(*)::int AS verifications_count
                     FROM verifications
+                    WHERE is_submitted
                     GROUP BY doctor_id
                 ) v ON v.doctor_id = u.id
                 LEFT JOIN (
@@ -490,12 +491,16 @@ router.post('/dataset/upload', upload.single('file'), async (req, res) => {
         // Add upload_id to all records
         const recordsWithUploadId = records.map(r => ({ ...r, upload_id: uploadEntry.id }));
 
-        const createMany = await prisma.triageRecord.createMany({
-            data: recordsWithUploadId,
-            skipDuplicates: true,
-        });
+        // Insert records in chunks to avoid single-statement size limits
+        const CHUNK_SIZE = 500;
+        for (let i = 0; i < recordsWithUploadId.length; i += CHUNK_SIZE) {
+            await prisma.triageRecord.createMany({
+                data: recordsWithUploadId.slice(i, i + CHUNK_SIZE),
+                skipDuplicates: true,
+            });
+        }
 
-        res.json({ message: 'Upload successful', rowsImported: createMany.count, uploadId: uploadEntry.id });
+        res.json({ message: 'Upload successful', rowsImported: records.length, uploadId: uploadEntry.id });
     } catch (error) {
         console.error('CSV Parsing/Import Error:', error);
         res.status(500).json({ message: 'Failed to process CSV. Ensure schema is correct.' });

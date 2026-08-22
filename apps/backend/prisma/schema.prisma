@@ -68,6 +68,7 @@ model TriageRecord {
   assignments     DoctorAssignment[]
   upload          DatasetUpload?    @relation(fields: [upload_id], references: [id])
 
+  @@index([upload_id])
   @@map("triage_records")
 }
 
@@ -85,7 +86,10 @@ model Verification {
   record              TriageRecord @relation(fields: [record_id], references: [id])
   doctor              User         @relation(fields: [doctor_id], references: [id])
 
+  is_submitted     Boolean           @default(true)
+
   @@unique([record_id, doctor_id])
+  @@index([doctor_id])
   @@map("verifications")
 }
 
@@ -125,5 +129,6 @@ model DoctorAssignment {
   record    TriageRecord @relation(fields: [record_id], references: [id])
 
   @@unique([doctor_id, record_id])
+  @@index([record_id])
   @@map("doctor_assignments")
 }

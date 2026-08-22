@@ -1,9 +1,8 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { authenticateJWT, requireDoctor, AuthRequest } from '../middleware/auth.middleware';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 router.use(authenticateJWT, requireDoctor);
 
@@ -18,7 +17,7 @@ router.get('/progress', async (req: AuthRequest, res) => {
         });
 
         const verifiedCount = await prisma.verification.count({
-            where: { doctor_id: doctorId }
+            where: { doctor_id: doctorId, is_submitted: true }
         });
 
         const progress = totalRecords > 0 ? Math.round((verifiedCount / totalRecords) * 100) : 0;
@@ -40,7 +39,7 @@ router.get('/queue', async (req: AuthRequest, res) => {
                 doctor_id: doctorId,
                 record: {
                     verifications: {
-                        none: { doctor_id: doctorId }
+                        none: { doctor_id: doctorId, is_submitted: true }
                     }
                 }
             },
@@ -101,7 +100,8 @@ router.post('/verifications', async (req: AuthRequest, res) => {
                 verified_departments,
                 clinical_note,
                 is_unable_to_assess: is_unable_to_assess || false,
-                submitted_at: new Date()
+                submitted_at: new Date(),
+                is_submitted: true
             },
             create: {
                 record_id: parseInt(record_id),
@@ -109,7 +109,8 @@ router.post('/verifications', async (req: AuthRequest, res) => {
                 verified_departments,
                 clinical_note,
                 is_unable_to_assess: is_unable_to_assess || false,
-                submitted_at: new Date()
+                submitted_at: new Date(),
+                is_submitted: true
             }
         });
         res.status(201).json({ message: 'Verification submitted', verification });
@@ -134,6 +135,7 @@ router.put('/verifications/:id', async (req: AuthRequest, res) => {
                 verified_departments,
                 clinical_note,
                 is_unable_to_assess: is_unable_to_assess || false,
+                is_submitted: true,
             }
         });
         res.json({ message: 'Verification updated', verification });
@@ -146,21 +148,21 @@ router.put('/verifications/:id', async (req: AuthRequest, res) => {
 router.put('/verifications/:id/draft', async (req: AuthRequest, res) => {
     const doctorId = req.user!.userId;
     const record_id = parseInt(req.params.id as string);
-    const { draft } = req.body;
+    const { draft, clinical_note, is_unable_to_assess } = req.body;
 
     try {
-        // Try to update if Verification exists, or upsert? 
-        // Drafts happen BEFORE submission. So we need upsert.
         const upserted = await prisma.verification.upsert({
             where: {
                 record_id_doctor_id: { record_id, doctor_id: doctorId }
             },
-            update: { draft },
+            update: { draft, clinical_note, is_unable_to_assess },
             create: {
                 record_id,
                 doctor_id: doctorId,
                 verified_departments: {},
                 draft,
+                clinical_note,
+                is_unable_to_assess,
             }
         });
         res.json({ message: 'Draft saved' });
