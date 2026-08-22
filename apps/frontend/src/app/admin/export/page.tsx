@@ -1,12 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { DownloadCloud, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function ExportPage() {
+    const router = useRouter();
     const [isExporting, setIsExporting] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            router.replace('/admin/login');
+        }
+    }, [router]);
 
     const handleExport = async () => {
         setIsExporting(true);
@@ -54,7 +63,7 @@ export default function ExportPage() {
                 <div className="max-w-md space-y-3">
                     <h2 className="text-2xl font-black text-slate-900 tracking-tight">Verified Annotations</h2>
                     <p className="text-sm text-slate-500 leading-relaxed">
-                        Generate a comprehensive CSV containing original Bangla symptoms, AI labels, and physician validations. This dataset is optimized for further NLP training.
+                        Generate a comprehensive CSV containing original Bangla symptoms, AI labels, and crowd worker validations. This dataset is optimized for further NLP training.
                     </p>
                 </div>
 

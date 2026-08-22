@@ -7,38 +7,28 @@ datasource db {
   url       = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  DOCTOR
-}
-
 model User {
   id                 Int               @id @default(autoincrement())
   name               String
   email              String            @unique
   password_hash      String
-  role               Role              @default(DOCTOR)
-  specialty          String?
-  institution        String?
+  role               String            @default("ADMIN")
   is_active          Boolean           @default(true)
   failed_login_count Int               @default(0)
   locked_at          DateTime?
   created_at         DateTime          @default(now())
   last_login_at      DateTime?
-  
-  verifications      Verification[]
-  assigned_records   DoctorAssignment[]
+
   uploads            DatasetUpload[]
-  login_audits       LoginAudit[]
-  
+
   @@map("users")
 }
 
 model TriageRecord {
-  id              Int               @id // Not autoincrement, from CSV
+  id              Int               @id @default(autoincrement())
   symptom_text    String
-  departments     String
-  num_labels      Int
+  departments     String            @default("")
+  num_labels      Int               @default(0)
   dataset_version String?
   created_at      DateTime          @default(now())
 
@@ -63,33 +53,44 @@ model TriageRecord {
   rheumatology    Int @default(0)
 
   upload_id       Int?
-  
+
   verifications   Verification[]
-  assignments     DoctorAssignment[]
   upload          DatasetUpload?    @relation(fields: [upload_id], references: [id])
 
   @@index([upload_id])
   @@map("triage_records")
 }
 
+model CrowdWorker {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  bmdc_reg_number String?
+  created_at      DateTime @default(now())
+
+  verifications   Verification[]
+
+  @@map("crowd_workers")
+}
+
 model Verification {
-  id                  Int          @id @default(autoincrement())
-  record_id           Int
-  doctor_id           Int
-  verified_departments Json
-  clinical_note       String?
-  is_unable_to_assess Boolean      @default(false)
-  draft               Json?
-  submitted_at        DateTime     @default(now())
-  updated_at          DateTime     @updatedAt
+  id                    Int          @id @default(autoincrement())
+  record_id             Int
+  worker_id             Int
+  verified_departments  Json
+  clinical_note         String?
+  is_unable_to_assess   Boolean      @default(false)
+  draft                 Json?
+  submitted_at          DateTime?
+  updated_at            DateTime     @updatedAt
+  claimed_at            DateTime?
+  is_submitted          Boolean      @default(false)
 
-  record              TriageRecord @relation(fields: [record_id], references: [id])
-  doctor              User         @relation(fields: [doctor_id], references: [id])
+  record                TriageRecord @relation(fields: [record_id], references: [id])
+  worker                CrowdWorker  @relation(fields: [worker_id], references: [id])
 
-  is_submitted     Boolean           @default(true)
-
-  @@unique([record_id, doctor_id])
-  @@index([doctor_id])
+  @@unique([record_id, worker_id])
+  @@index([worker_id])
+  @@index([record_id])
   @@map("verifications")
 }
 
@@ -103,32 +104,6 @@ model DatasetUpload {
 
   admin            User     @relation(fields: [uploaded_by], references: [id])
   triage_records   TriageRecord[]
-  
+
   @@map("dataset_uploads")
-}
-
-model LoginAudit {
-  id          Int      @id @default(autoincrement())
-  user_id     Int?
-  email       String
-  ip_address  String?
-  success     Boolean
-  created_at  DateTime @default(now())
-
-  user        User?    @relation(fields: [user_id], references: [id])
-
-  @@map("login_audit")
-}
-
-model DoctorAssignment {
-  id        Int          @id @default(autoincrement())
-  doctor_id Int
-  record_id Int
-
-  doctor    User         @relation(fields: [doctor_id], references: [id])
-  record    TriageRecord @relation(fields: [record_id], references: [id])
-
-  @@unique([doctor_id, record_id])
-  @@index([record_id])
-  @@map("doctor_assignments")
 }

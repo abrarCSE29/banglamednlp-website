@@ -1,36 +1,12 @@
 import express from 'express';
-import bcrypt from 'bcrypt';
-import crypto from 'crypto';
 import multer from 'multer';
 import { parse } from 'csv-parse';
-import nodemailer from 'nodemailer';
 import { prisma } from '../lib/prisma';
 import { authenticateJWT, requireAdmin } from '../middleware/auth.middleware';
 
 const router = express.Router();
 const upload = multer({ limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit
-const DOCTOR_PORTAL_URL = 'https://banglamednlp.abrarhameem.me';
 
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'localhost',
-    port: parseInt(process.env.SMTP_PORT || '1025'),
-    auth: process.env.SMTP_USER ? {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    } : undefined,
-    secure: process.env.SMTP_PORT === '465'
-});
-
-// Normalize from header and envelope address for SMTP
-const SMTP_FROM_ADDRESS = process.env.SMTP_FROM_ADDRESS || (() => {
-    const m = (process.env.SMTP_FROM || '').match(/<([^>]+)>/);
-    return m ? m[1] : (process.env.SMTP_FROM || 'no-reply@resend.dev');
-})();
-const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || (() => {
-    const m = (process.env.SMTP_FROM || '').match(/^\s*\"?([^\"<]+)\"?\s*</);
-    return m ? m[1].trim() : 'Verification System';
-})();
-const FROM_HEADER = SMTP_FROM_NAME ? `"${SMTP_FROM_NAME}" <${SMTP_FROM_ADDRESS}>` : SMTP_FROM_ADDRESS;
 const DEPARTMENTS = [
     'medicine', 'neurology', 'surgery', 'gastroenterology', 'pediatrics',
     'cardiology', 'ent', 'orthopedics', 'endocrinology', 'nephrology',
@@ -123,8 +99,7 @@ CROSS JOIN kappa_calc k;
 type DashboardSummaryRow = {
     total_records: number;
     verified_records: number;
-    total_assignments: number;
-    assigned_records_count: number;
+    total_workers: number;
 };
 
 type DashboardMetricsRow = {
@@ -135,13 +110,11 @@ type DashboardMetricsRow = {
     cohen_kappa: number | string;
 };
 
-type DashboardDoctorRow = {
+type DashboardWorkerRow = {
     id: number;
-    name: string;
-    specialty: string | null;
-    is_active: boolean;
+    email: string;
+    bmdc_reg_number: string | null;
     verifications_count: number;
-    assigned_records_count: number;
 };
 
 router.use(authenticateJWT, requireAdmin);
@@ -149,35 +122,27 @@ router.use(authenticateJWT, requireAdmin);
 // === DASHBOARD STATS ===
 router.get('/dashboard', async (req, res) => {
     try {
-        const [summaryRows, doctorsRows, metricsRows] = await Promise.all([
+        const [summaryRows, workersRows, metricsRows] = await Promise.all([
             prisma.$queryRaw<DashboardSummaryRow[]>`
                 SELECT
                     (SELECT COUNT(*)::int FROM triage_records) AS total_records,
                     (SELECT COUNT(*)::int FROM verifications WHERE is_submitted) AS verified_records,
-                    (SELECT COUNT(*)::int FROM doctor_assignments) AS total_assignments,
-                    (SELECT COUNT(DISTINCT record_id)::int FROM doctor_assignments) AS assigned_records_count
+                    (SELECT COUNT(*)::int FROM crowd_workers) AS total_workers
             `,
-            prisma.$queryRaw<DashboardDoctorRow[]>`
+            prisma.$queryRaw<DashboardWorkerRow[]>`
                 SELECT
-                    u.id,
-                    u.name,
-                    u.specialty,
-                    u.is_active,
-                    COALESCE(v.verifications_count, 0)::int AS verifications_count,
-                    COALESCE(a.assigned_records_count, 0)::int AS assigned_records_count
-                FROM users u
+                    w.id,
+                    w.email,
+                    w.bmdc_reg_number,
+                    COALESCE(v.verifications_count, 0)::int AS verifications_count
+                FROM crowd_workers w
                 LEFT JOIN (
-                    SELECT doctor_id, COUNT(*)::int AS verifications_count
+                    SELECT worker_id, COUNT(*)::int AS verifications_count
                     FROM verifications
                     WHERE is_submitted
-                    GROUP BY doctor_id
-                ) v ON v.doctor_id = u.id
-                LEFT JOIN (
-                    SELECT doctor_id, COUNT(*)::int AS assigned_records_count
-                    FROM doctor_assignments
-                    GROUP BY doctor_id
-                ) a ON a.doctor_id = u.id
-                WHERE u.role = 'DOCTOR'::"Role"
+                    GROUP BY worker_id
+                ) v ON v.worker_id = w.id
+                ORDER BY v.verifications_count DESC NULLS LAST
             `,
             prisma.$queryRawUnsafe<DashboardMetricsRow[]>(DASHBOARD_METRICS_SQL)
         ]);
@@ -185,8 +150,7 @@ router.get('/dashboard', async (req, res) => {
         const summary = summaryRows[0] ?? {
             total_records: 0,
             verified_records: 0,
-            total_assignments: 0,
-            assigned_records_count: 0
+            total_workers: 0
         };
         const metricsRow = metricsRows[0] ?? {
             total_verifications: 0,
@@ -208,27 +172,20 @@ router.get('/dashboard', async (req, res) => {
             cohenKappa: Number(metricsRow.cohen_kappa ?? 0)
         };
 
-        const doctors = doctorsRows.map((doctor) => ({
-            id: Number(doctor.id),
-            name: doctor.name,
-            specialty: doctor.specialty ?? 'N/A',
-            is_active: doctor.is_active,
+        const workers = workersRows.map((worker) => ({
+            id: Number(worker.id),
+            email: worker.email,
+            bmdc_reg_number: worker.bmdc_reg_number ?? 'N/A',
             _count: {
-                verifications: Number(doctor.verifications_count),
-                assigned_records: Number(doctor.assigned_records_count)
+                verifications: Number(worker.verifications_count)
             }
         }));
 
-        const totalRecords = Number(summary.total_records ?? 0);
-        const assignedRecordsCount = Number(summary.assigned_records_count ?? 0);
-
         res.json({
-            totalRecords,
+            totalRecords: Number(summary.total_records ?? 0),
             verifiedRecords: Number(summary.verified_records ?? 0),
-            totalAssignments: Number(summary.total_assignments ?? 0),
-            assignedRecordsCount,
-            unassignedRecordsCount: totalRecords - assignedRecordsCount,
-            doctors,
+            totalWorkers: Number(summary.total_workers ?? 0),
+            workers,
             metrics
         });
     } catch (error) {
@@ -237,196 +194,27 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
-// === PHYSICIAN CRUD ===
-router.get('/doctors', async (req, res) => {
+// === CROWD WORKERS ===
+router.get('/workers', async (req, res) => {
     try {
-        const doctors = await prisma.user.findMany({
-            where: { role: 'DOCTOR' },
+        const workers = await prisma.crowdWorker.findMany({
             select: {
                 id: true,
-                name: true,
                 email: true,
-                specialty: true,
-                institution: true,
-                is_active: true,
-                last_login_at: true,
+                bmdc_reg_number: true,
+                created_at: true,
                 _count: {
                     select: {
-                        verifications: true,
-                        assigned_records: true
+                        verifications: true
                     }
                 }
-            }
+            },
+            orderBy: { created_at: 'desc' }
         });
-        res.json(doctors);
+        res.json(workers);
     } catch (error: any) {
         console.error(error);
-        res.status(500).json({ message: 'Error fetching doctors', error: error.message });
-    }
-});
-
-router.post('/doctors', async (req, res) => {
-    const { name, email, specialty, institution } = req.body;
-
-    if (!name || !email) {
-        res.status(400).json({ message: 'Name and email are required' });
-        return;
-    }
-
-    try {
-        // Generate temporary 6-digit numeric password (e.g. 123456)
-        const tempPassword = (await crypto.randomInt(100000, 1000000)).toString();
-        const passwordHash = await bcrypt.hash(tempPassword, 12);
-
-        const doctor = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password_hash: passwordHash,
-                role: 'DOCTOR',
-                specialty,
-                institution
-            }
-        });
-
-        // Send Onboarding Email
-        const emailHtml = `
-      <h3>Welcome to the Bangla Medical Triage Verification System</h3>
-      <p>Hello Dr. ${name},</p>
-      <p>Your account has been created. Please log in using the temporary credentials below:</p>
-      <p><strong>Email:</strong> ${email}<br/>
-      <strong>Temporary Password:</strong> ${tempPassword}</p>
-            <p>You can access the portal here: <a href="${DOCTOR_PORTAL_URL}">${DOCTOR_PORTAL_URL}</a></p>
-      <p>You will be required to change your password upon first login.</p>
-    `;
-
-        try {
-            await transporter.sendMail({
-                from: FROM_HEADER,
-                to: email,
-                subject: 'Your Account Credentials',
-                html: emailHtml,
-                envelope: { from: SMTP_FROM_ADDRESS, to: email }
-            });
-        } catch (emailErr) {
-            console.error('Email sending failed (Mailhog/SMTP config issue?):', emailErr);
-            // We still return 200 because user is created
-        }
-
-        res.status(201).json({ message: 'Doctor created', doctorId: doctor.id });
-    } catch (error: any) {
-        if (error.code === 'P2002') {
-            res.status(409).json({ message: 'Email already exists' });
-        } else {
-            console.error(error);
-            res.status(500).json({ message: 'Error creating doctor' });
-        }
-    }
-});
-
-router.put('/doctors/:id/deactivate', async (req, res) => {
-    const { id } = req.params;
-    try {
-        await prisma.user.update({
-            where: { id: parseInt(id) },
-            data: { is_active: false }
-        });
-        res.json({ message: 'Account deactivated' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error deactivating doctor' });
-    }
-});
-
-router.put('/doctors/:id/reactivate', async (req, res) => {
-    const { id } = req.params;
-    try {
-        await prisma.user.update({
-            where: { id: parseInt(id) },
-            data: { is_active: true }
-        });
-        res.json({ message: 'Account reactivated' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error reactivating doctor' });
-    }
-});
-
-router.post('/doctors/:id/resend-email', async (req, res) => {
-    // Generates a new temp password and resends it
-    const { id } = req.params;
-    try {
-        const doctor = await prisma.user.findUnique({ where: { id: parseInt(id) } });
-        if (!doctor) {
-            res.status(404).json({ message: 'Doctor not found' });
-            return;
-        }
-
-        const tempPassword = (await crypto.randomInt(100000, 1000000)).toString();
-        const passwordHash = await bcrypt.hash(tempPassword, 12);
-
-        await prisma.user.update({
-            where: { id: doctor.id },
-            data: { password_hash: passwordHash }
-        });
-
-                await transporter.sendMail({
-                        from: FROM_HEADER,
-                        to: doctor.email,
-                        subject: '[Resend] Your Account Credentials',
-                        html: `
-                <p>Hello Dr. ${doctor.name},</p>
-                <p>Your password has been reset by an administrator. Please log in using the temporary credentials below:</p>
-                <p><strong>Email:</strong> ${doctor.email}<br/>
-                <strong>Temporary Password:</strong> ${tempPassword}</p>
-                <p>You can access the portal here: <a href="${DOCTOR_PORTAL_URL}">${DOCTOR_PORTAL_URL}</a></p>
-            `,
-                        envelope: { from: SMTP_FROM_ADDRESS, to: doctor.email }
-                });
-
-        res.json({ message: 'Credentials email resent' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error resending email' });
-    }
-});
-
-router.post('/doctors/:id/assign', async (req, res) => {
-    const { id } = req.params;
-    const { count } = req.body;
-    const doctorId = parseInt(id);
-    const assignmentCount = parseInt(count) || 50;
-
-    try {
-        // Find records that are NOT assigned to ANYONE yet
-        // Using a raw query for random ordering as Prisma random sampling is complex
-        // We'll fetch IDs of unassigned records
-        const unassignedRecords = await prisma.$queryRaw<{ id: number }[]>`
-            SELECT id FROM triage_records 
-            WHERE id NOT IN (SELECT record_id FROM doctor_assignments)
-            ORDER BY RANDOM()
-            LIMIT ${assignmentCount}
-        `;
-
-        if (unassignedRecords.length === 0) {
-            res.status(404).json({ message: 'No unassigned records available' });
-            return;
-        }
-
-        const assignments = unassignedRecords.map(r => ({
-            doctor_id: doctorId,
-            record_id: r.id
-        }));
-
-        await prisma.doctorAssignment.createMany({
-            data: assignments,
-            skipDuplicates: true
-        });
-
-        res.json({
-            message: `Successfully assigned ${unassignedRecords.length} records to the physician.`,
-            count: unassignedRecords.length
-        });
-    } catch (error: any) {
-        console.error('Assignment Error:', error);
-        res.status(500).json({ message: 'Error assigning records', error: error.message });
+        res.status(500).json({ message: 'Error fetching workers', error: error.message });
     }
 });
 
@@ -448,11 +236,7 @@ router.post('/dataset/upload', upload.single('file'), async (req, res) => {
     const records: any[] = [];
     try {
         for await (const record of parser) {
-            records.push({
-                id: parseInt(record.id),
-                symptom_text: record.symptom_text,
-                departments: record.departments,
-                num_labels: parseInt(record.num_labels),
+            const deptMap: Record<string, number> = {
                 medicine: parseInt(record.medicine || '0'),
                 neurology: parseInt(record.neurology || '0'),
                 surgery: parseInt(record.surgery || '0'),
@@ -471,6 +255,18 @@ router.post('/dataset/upload', upload.single('file'), async (req, res) => {
                 urology: parseInt(record.urology || '0'),
                 gynecology: parseInt(record.gynecology || '0'),
                 rheumatology: parseInt(record.rheumatology || '0'),
+            };
+            const departments = Object.entries(deptMap)
+                .filter(([_, v]) => v === 1)
+                .map(([k]) => k)
+                .join(', ');
+            const num_labels = Object.values(deptMap).filter(v => v === 1).length;
+
+            records.push({
+                symptom_text: record.symptom_text,
+                departments,
+                num_labels,
+                ...deptMap,
             });
         }
 
@@ -524,10 +320,6 @@ router.delete('/dataset/uploads/:id', async (req, res) => {
             prisma.verification.deleteMany({
                 where: { record_id: { in: recordIds } }
             }),
-            // Delete doctor assignments
-            prisma.doctorAssignment.deleteMany({
-                where: { record_id: { in: recordIds } }
-            }),
             // Delete the records themselves
             prisma.triageRecord.deleteMany({
                 where: { upload_id: uploadId } as any
@@ -549,7 +341,6 @@ router.post('/dataset/reset', async (req, res) => {
     try {
         await prisma.$transaction([
             prisma.verification.deleteMany(),
-            prisma.doctorAssignment.deleteMany(),
             prisma.triageRecord.deleteMany(),
             prisma.datasetUpload.deleteMany()
         ]);
@@ -604,25 +395,25 @@ router.get('/dataset/preview', async (req, res) => {
 router.get('/dataset/export', async (req, res) => {
     try {
         const verifiedRecords = await prisma.verification.findMany({
-            include: { record: true, doctor: true }
+            include: { record: true, worker: true }
         });
 
         // Create a CSV header
-        const csvRows = ['id,symptom_text,doctor_name,doctor_email,clinical_note,unable_to_assess,AI_medicine,DOC_medicine,AI_neurology,DOC_neurology'];
+        const csvRows = ['id,symptom_text,worker_email,bmdc_reg_number,clinical_note,unable_to_assess,AI_departments,Worker_departments'];
         verifiedRecords.forEach(v => {
             const r = v.record as any;
-            const d = v.doctor as any;
-            const doc_depts = v.verified_departments as any;
+            const w = v.worker as any;
+            const worker_depts = v.verified_departments as any;
 
             const row = [
                 r.id,
                 `"${r.symptom_text.replace(/"/g, '""')}"`,
-                d.name,
-                d.email,
+                w.email,
+                w.bmdc_reg_number,
                 `"${(v.clinical_note || '').replace(/"/g, '""')}"`,
                 v.is_unable_to_assess,
-                r.departments, // AI side
-                Object.entries(doc_depts).filter(([_, val]) => val).map(([key]) => key).join('|') // Doctor side
+                r.departments,
+                Object.entries(worker_depts).filter(([_, val]) => val).map(([key]) => key).join('|')
             ].join(',');
             csvRows.push(row);
         });

@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
-import doctorRoutes from './routes/doctor';
+import crowdRoutes from './routes/crowd';
 
 dotenv.config();
 
@@ -59,7 +59,7 @@ app.get('/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/doctor', doctorRoutes);
+app.use('/api/crowd', crowdRoutes);
 
 const PORT = process.env.PORT || 3001;
 

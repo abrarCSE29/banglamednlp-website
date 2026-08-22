@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../lib/prisma';
 
 export interface AuthRequest extends Request {
     user?: {
@@ -32,14 +31,6 @@ export const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunct
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (req.user?.role !== 'ADMIN') {
         res.status(403).json({ message: 'Forbidden: Admin access required.' });
-        return;
-    }
-    next();
-};
-
-export const requireDoctor = (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (req.user?.role !== 'DOCTOR') {
-        res.status(403).json({ message: 'Forbidden: Doctor access required.' });
         return;
     }
     next();

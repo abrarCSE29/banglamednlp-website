@@ -1,24 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FileStack, CheckCircle2, Users, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 
 interface DashboardStats {
     totalRecords: number;
     verifiedRecords: number;
-    totalAssignments: number;
-    assignedRecordsCount: number;
-    unassignedRecordsCount: number;
-    doctors: {
+    totalWorkers: number;
+    workers: {
         id: number;
-        name: string;
-        specialty: string;
-        is_active: boolean;
-        _count: {
-            verifications: number;
-            assigned_records: number;
-        };
+        email: string;
+        bmdc_reg_number: string;
+        created_at: string;
+        verifications_count: number;
     }[];
     metrics: {
         acceptanceRate: number;
@@ -29,10 +25,17 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+    const router = useRouter();
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            router.replace('/admin/login');
+            return;
+        }
+
         const fetchStats = async () => {
             try {
                 const { data } = await api.get('/admin/dashboard');
@@ -66,16 +69,16 @@ export default function AdminDashboard() {
         ? Math.round((stats.verifiedRecords / stats.totalRecords) * 100)
         : 0;
 
-    const assignmentPercentage = stats?.totalRecords
-        ? Math.round((stats.assignedRecordsCount / stats.totalRecords) * 100)
-        : 0;
+    const sortedWorkers = stats?.workers
+        ? [...stats.workers].sort((a, b) => b.verifications_count - a.verifications_count)
+        : [];
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard Overview</h1>
-                    <p className="text-muted-foreground mt-1">Real-time statistics for dataset verification.</p>
+                    <p className="text-muted-foreground mt-1">Real-time statistics for crowd verification.</p>
                 </div>
             </div>
 
@@ -95,7 +98,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Doctor Fix Rate</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fix Rate</p>
                     <div className="flex items-baseline gap-2">
                         <h3 className={`text-2xl md:text-3xl font-black ${getStatusColor(stats?.metrics.fixRate || 0, 'fix')}`}>
                             {stats?.metrics.fixRate || 0}%
@@ -128,30 +131,21 @@ export default function AdminDashboard() {
                         </h3>
                         <span className="text-[10px] text-slate-400 font-bold">Target ≥0.75</span>
                     </div>
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden">
                         <div className={`h-full transition-all duration-1000 ${getStatusColor(stats?.metrics.cohenKappa || 0, 'kappa').replace('text', 'bg')}`} style={{ width: `${(Number(stats?.metrics.cohenKappa) || 0) * 100}%` }} />
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
                     <div className="p-2 md:p-3 bg-indigo-50 text-indigo-500 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition-all">
                         <FileStack className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Records</p>
                         <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.totalRecords || 0}</h3>
-                    </div>
-                </div>
-
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
-                    <div className="p-2 md:p-3 bg-amber-50 text-amber-500 rounded-xl group-hover:bg-amber-500 group-hover:text-white transition-all">
-                        <Users className="w-5 h-5 md:w-6 md:h-6" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assigned</p>
-                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.assignedRecordsCount || 0}</h3>
                     </div>
                 </div>
 
@@ -165,53 +159,36 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
-                    <div className="p-2 md:p-3 bg-slate-100 text-slate-500 rounded-xl group-hover:bg-slate-800 group-hover:text-white transition-all">
-                        <FileStack className="w-5 h-5 md:w-6 md:h-6 opacity-50" />
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group col-span-2 md:col-span-1">
+                    <div className="p-2 md:p-3 bg-amber-50 text-amber-500 rounded-xl group-hover:bg-amber-500 group-hover:text-white transition-all">
+                        <Users className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pending</p>
-                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.unassignedRecordsCount || 0}</h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Workers</p>
+                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.totalWorkers || 0}</h3>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {/* System Progress */}
-                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm h-full">
-                    <div className="flex justify-between items-end mb-4">
-                        <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Overall Progress</h3>
-                        <span className="text-lg md:text-xl font-black text-emerald-600">{completionPercentage}%</span>
-                    </div>
-                    <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                        <div
-                            className="h-full bg-emerald-500 transition-all duration-1000 ease-out"
-                            style={{ width: `${completionPercentage}%` }}
-                        />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-3">Percentage of total records verified by doctors.</p>
+            {/* Overall Progress */}
+            <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-end mb-4">
+                    <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Overall Progress</h3>
+                    <span className="text-lg md:text-xl font-black text-emerald-600">{completionPercentage}%</span>
                 </div>
-
-                {/* Assignment Progress */}
-                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm h-full">
-                    <div className="flex justify-between items-end mb-4">
-                        <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Assignment Coverage</h3>
-                        <span className="text-lg md:text-xl font-black text-indigo-600">{assignmentPercentage}%</span>
-                    </div>
-                    <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                        <div
-                            className="h-full bg-indigo-500 transition-all duration-1000 ease-out"
-                            style={{ width: `${assignmentPercentage}%` }}
-                        />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-3">Percentage of records distributed to the physician panel.</p>
+                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                    <div
+                        className="h-full bg-emerald-500 transition-all duration-1000 ease-out"
+                        style={{ width: `${completionPercentage}%` }}
+                    />
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-3">Percentage of total records verified by crowd workers.</p>
             </div>
 
-            {/* Doctor Summary Table */}
+            {/* Crowd Workers Table */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                 <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50">
-                    <h3 className="font-semibold text-lg">Physician Workload</h3>
+                    <h3 className="font-semibold text-lg">Crowd Workers</h3>
                 </div>
 
                 {/* Desktop Table */}
@@ -219,40 +196,26 @@ export default function AdminDashboard() {
                     <table className="w-full text-sm text-left">
                         <thead className="text-muted-foreground bg-slate-50 uppercase text-xs">
                             <tr>
-                                <th className="px-6 py-4 font-medium border-b border-slate-100">Name</th>
-                                <th className="px-6 py-4 font-medium border-b border-slate-100">Specialty</th>
-                                <th className="px-6 py-4 font-medium text-center border-b border-slate-100">Assigned</th>
-                                <th className="px-6 py-4 font-medium text-center border-b border-slate-100">Verified</th>
-                                <th className="px-6 py-4 font-medium text-right border-b border-slate-100">Completion</th>
+                                <th className="px-6 py-4 font-medium border-b border-slate-100">Email</th>
+                                <th className="px-6 py-4 font-medium border-b border-slate-100">BMDC Reg #</th>
+                                <th className="px-6 py-4 font-medium text-center border-b border-slate-100">Verifications</th>
+                                <th className="px-6 py-4 font-medium text-right border-b border-slate-100">Joined</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {stats?.doctors
-                                .sort((a, b) => b._count.verifications - a._count.verifications)
-                                .map((doctor) => {
-                                    const personalProgress = doctor._count.assigned_records > 0
-                                        ? Math.round((doctor._count.verifications / doctor._count.assigned_records) * 100)
-                                        : 0;
-                                    return (
-                                        <tr key={doctor.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-foreground">{doctor.name}</td>
-                                            <td className="px-6 py-4 text-muted-foreground">{doctor.specialty || 'N/A'}</td>
-                                            <td className="px-6 py-4 text-center font-bold text-slate-600">{doctor._count.assigned_records}</td>
-                                            <td className="px-6 py-4 text-center font-bold text-indigo-600">{doctor._count.verifications}</td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <span className="text-xs font-bold text-slate-400">{personalProgress}%</span>
-                                                    <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                                                        <div className="h-full bg-indigo-500" style={{ width: `${personalProgress}%` }} />
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            {stats?.doctors.length === 0 && (
+                            {sortedWorkers.map((worker) => (
+                                <tr key={worker.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <td className="px-6 py-4 font-medium text-foreground">{worker.email}</td>
+                                    <td className="px-6 py-4 text-muted-foreground">{worker.bmdc_reg_number || 'N/A'}</td>
+                                    <td className="px-6 py-4 text-center font-bold text-indigo-600">{worker.verifications_count}</td>
+                                    <td className="px-6 py-4 text-right text-muted-foreground">
+                                        {new Date(worker.created_at).toLocaleDateString()}
+                                    </td>
+                                </tr>
+                            ))}
+                            {sortedWorkers.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">No doctors registered yet.</td>
+                                    <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">No workers registered yet.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -261,35 +224,25 @@ export default function AdminDashboard() {
 
                 {/* Mobile Cards */}
                 <div className="md:hidden divide-y divide-slate-100">
-                    {stats?.doctors
-                        .sort((a, b) => b._count.verifications - a._count.verifications)
-                        .map((doctor) => {
-                            const personalProgress = doctor._count.assigned_records > 0
-                                ? Math.round((doctor._count.verifications / doctor._count.assigned_records) * 100)
-                                : 0;
-                            return (
-                                <div key={doctor.id} className="p-4 hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div>
-                                            <p className="font-medium text-foreground">{doctor.name}</p>
-                                            <p className="text-xs text-muted-foreground">{doctor.specialty || 'N/A'}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-xs font-bold text-slate-400">{personalProgress}%</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4 mb-2">
-                                        <span className="text-xs text-slate-500">Assigned: <span className="font-bold text-slate-600">{doctor._count.assigned_records}</span></span>
-                                        <span className="text-xs text-slate-500">Verified: <span className="font-bold text-indigo-600">{doctor._count.verifications}</span></span>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                                        <div className="h-full bg-indigo-500" style={{ width: `${personalProgress}%` }} />
-                                    </div>
+                    {sortedWorkers.map((worker) => (
+                        <div key={worker.id} className="p-4 hover:bg-slate-50 transition-colors">
+                            <div className="flex items-center justify-between mb-2">
+                                <div>
+                                    <p className="font-medium text-foreground">{worker.email}</p>
+                                    <p className="text-xs text-muted-foreground">{worker.bmdc_reg_number || 'N/A'}</p>
                                 </div>
-                            );
-                        })}
-                    {stats?.doctors.length === 0 && (
-                        <div className="p-8 text-center text-muted-foreground">No doctors registered yet.</div>
+                                <div className="text-right">
+                                    <span className="text-sm font-bold text-indigo-600">{worker.verifications_count}</span>
+                                    <p className="text-[10px] text-slate-400">verifications</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-xs text-slate-500">Joined: <span className="font-bold text-slate-600">{new Date(worker.created_at).toLocaleDateString()}</span></span>
+                            </div>
+                        </div>
+                    ))}
+                    {sortedWorkers.length === 0 && (
+                        <div className="p-8 text-center text-muted-foreground">No workers registered yet.</div>
                     )}
                 </div>
             </div>

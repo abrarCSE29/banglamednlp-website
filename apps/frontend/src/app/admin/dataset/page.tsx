@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { UploadCloud, CheckCircle2, FileWarning, PlayCircle, Trash2, X, Eye, Database, Info } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function DatasetUploadPage() {
+    const router = useRouter();
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -32,6 +34,13 @@ export default function DatasetUploadPage() {
             toast.error('Failed to fetch preview');
         }
     };
+
+    useEffect(() => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            router.replace('/admin/login');
+        }
+    }, [router]);
 
     useEffect(() => {
         fetchHistory();
@@ -105,7 +114,7 @@ export default function DatasetUploadPage() {
     };
 
     const resetDatabase = async () => {
-        if (!window.confirm('🚨 DANGER: This will permanently DELETE ALL triage records, ALL physician validations, and ALL history. This cannot be undone. Are you absolutely sure?')) return;
+        if (!window.confirm('🚨 DANGER: This will permanently DELETE ALL triage records, all crowd validations, and ALL history. This cannot be undone. Are you absolutely sure?')) return;
 
         try {
             await api.post('/admin/dataset/reset');
@@ -325,7 +334,7 @@ export default function DatasetUploadPage() {
                             id, symptom_text, departments, num_labels, [18 binary flags]
                         </div>
                         <p className="text-[10px] text-indigo-500 leading-relaxed">
-                            Ensure headers match exactly and patient symptom text is in Bangla for optimal physician verification.
+                            Ensure headers match exactly and patient symptom text is in Bangla for optimal crowd worker verification.
                         </p>
                     </div>
                 </div>

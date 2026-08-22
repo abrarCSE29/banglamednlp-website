@@ -59,6 +59,30 @@
 
     --radius: 0.75rem;
   }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --primary: 238.7 83.5% 66.7%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 238.7 83.5% 66.7%;
+  }
 }
 
 @layer base {
@@ -74,6 +98,10 @@
 }
 
 /* Metronic Helpers */
+.font-poppins {
+  font-family: var(--font-poppins), sans-serif;
+}
+
 .card-metronic {
   @apply bg-white rounded-2xl border border-slate-100 transition-all duration-300;
   box-shadow: 0 0 20px 0 rgba(76, 87, 125, 0.02);

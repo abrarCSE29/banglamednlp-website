@@ -25,8 +25,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light">
-      <body className={`${inter.variable} ${poppins.variable} antialiased min-h-screen bg-slate-50/50 uppercase-headings`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+              document.documentElement.classList.add('dark');
+            }
+          })();
+        `}} />
+      </head>
+      <body className={`${inter.variable} ${poppins.variable} font-[family-name:var(--font-inter)] antialiased min-h-screen bg-slate-50 dark:bg-slate-950`}>
         <Toaster position="top-right" richColors closeButton />
         {children}
       </body>

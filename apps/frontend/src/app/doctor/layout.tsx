@@ -1,11 +1,9 @@
 'use client';
 
-import DashboardLayout from '@/components/layout/DashboardLayout';
-
 export default function DoctorLayout({ children }: { children: React.ReactNode }) {
     return (
-        <DashboardLayout role="doctor">
+        <div className="min-h-dvh bg-slate-50">
             {children}
-        </DashboardLayout>
+        </div>
     );
 }

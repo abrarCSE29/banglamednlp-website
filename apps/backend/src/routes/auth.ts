@@ -8,19 +8,10 @@ const router = express.Router();
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_DURATION_MINS = 15;
-const isProduction = process.env.NODE_ENV === 'production';
 
-const refreshCookieOptions = {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
-    path: '/',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-};
-
+// POST /api/auth/login — admin login only
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
-    const ip = req.ip || req.socket.remoteAddress || 'unknown';
 
     if (!email || !password) {
         res.status(400).json({ message: 'Email and password required' });
@@ -31,13 +22,11 @@ router.post('/login', async (req, res) => {
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) {
-            await prisma.loginAudit.create({ data: { email, ip_address: ip, success: false } });
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
 
         if (!user.is_active) {
-            await prisma.loginAudit.create({ data: { user_id: user.id, email, ip_address: ip, success: false } });
             res.status(403).json({ message: 'Account deactivated' });
             return;
         }
@@ -62,32 +51,20 @@ router.post('/login', async (req, res) => {
                 }
             });
 
-            await prisma.loginAudit.create({ data: { user_id: user.id, email, ip_address: ip, success: false } });
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
 
-        // Success
         await prisma.user.update({
             where: { id: user.id },
             data: { failed_login_count: 0, locked_at: null, last_login_at: new Date() }
         });
 
-        await prisma.loginAudit.create({ data: { user_id: user.id, email, ip_address: ip, success: true } });
-
         const accessToken = jwt.sign(
             { userId: user.id, role: user.role, email: user.email },
             process.env.JWT_SECRET as string,
-            { expiresIn: '15m' }
+            { expiresIn: '24h' }
         );
-
-        const refreshToken = jwt.sign(
-            { userId: user.id },
-            process.env.JWT_REFRESH_SECRET as string,
-            { expiresIn: '7d' }
-        );
-
-        res.cookie('refreshToken', refreshToken, refreshCookieOptions);
 
         res.json({ accessToken, role: user.role, name: user.name });
     } catch (error) {
@@ -96,45 +73,12 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/refresh', async (req, res) => {
-    const refreshToken = req.cookies?.refreshToken; // Needs cookie-parser middleware in index.ts
-
-    if (!refreshToken) {
-        res.sendStatus(401);
-        return;
-    }
-
-    try {
-        const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET as string) as any;
-        const user = await prisma.user.findUnique({ where: { id: payload.userId } });
-
-        if (!user || !user.is_active) {
-            res.sendStatus(403);
-            return;
-        }
-
-        const accessToken = jwt.sign(
-            { userId: user.id, role: user.role, email: user.email },
-            process.env.JWT_SECRET as string,
-            { expiresIn: '15m' }
-        );
-
-        res.json({ accessToken });
-    } catch (error) {
-        res.sendStatus(403);
-    }
-});
-
+// POST /api/auth/logout
 router.post('/logout', (req, res) => {
-    res.clearCookie('refreshToken', {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
-        path: '/'
-    });
     res.json({ message: 'Logged out successfully' });
 });
 
+// GET /api/auth/me
 router.get('/me', authenticateJWT, (req: any, res) => {
     res.json({ user: req.user });
 });

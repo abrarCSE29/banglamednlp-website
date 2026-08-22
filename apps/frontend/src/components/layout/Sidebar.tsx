@@ -21,13 +21,12 @@ import { useRouter } from 'next/navigation';
 const ADMIN_ITEMS = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard' },
     { name: 'Datasets', icon: Database, href: '/admin/dataset' },
-    { name: 'Physicians', icon: Users, href: '/admin/physicians' },
+    { name: 'Workers', icon: Users, href: '/admin/physicians' },
     { name: 'Export', icon: FileDown, href: '/admin/export' },
 ];
 
 const DOCTOR_ITEMS = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/doctor/dashboard' },
-    { name: 'Verify Record', icon: Stethoscope, href: '/doctor/queue' },
 ];
 
 export default function Sidebar({ role, onClose }: { role: 'admin' | 'doctor'; onClose?: () => void }) {
@@ -39,10 +38,10 @@ export default function Sidebar({ role, onClose }: { role: 'admin' | 'doctor'; o
     const handleLogout = async () => {
         try {
             await api.post('/auth/logout');
-            router.push('/login');
-        } catch (e) {
-            window.location.href = '/login';
-        }
+        } catch {}
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('worker');
+        window.location.href = role === 'admin' ? '/admin/login' : '/';
     };
 
     return (

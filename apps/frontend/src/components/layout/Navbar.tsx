@@ -10,24 +10,23 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
     const [showDropdown, setShowDropdown] = useState(false);
 
     useEffect(() => {
-        const fetchUser = async () => {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
             try {
-                const res = await api.get('/auth/me');
-                const data = res.data as { user: any };
-                setUser(data.user);
-            } catch (e) { }
-        };
-        fetchUser();
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                setUser({ email: payload.email, name: payload.email?.split('@')[0], role: payload.role });
+            } catch {}
+        }
     }, []);
 
     const handleLogout = async () => {
         try {
             await api.post('/auth/logout');
-            localStorage.removeItem('accessToken');
-            window.location.href = '/';
-        } catch (e) {
-            window.location.href = '/';
-        }
+        } catch {}
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('worker');
+        const isAdmin = user?.role === 'ADMIN';
+        window.location.href = isAdmin ? '/admin/login' : '/';
     };
 
     return (
