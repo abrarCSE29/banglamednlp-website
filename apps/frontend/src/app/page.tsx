@@ -52,16 +52,13 @@ export default function CrowdWorkerEnterPage() {
             <h1 className="text-3xl font-bold tracking-tight text-white uppercase font-poppins">
               Bangla Medical <span className="text-indigo-400">Triage</span> Verification
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] mt-3">
-              Help verify AI-generated medical classifications
-            </p>
           </div>
 
           <div className="p-8 md:p-12 space-y-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" htmlFor="email">
-                  Work Email
+                  Email
                 </label>
                 <input
                   id="email"
@@ -84,7 +81,7 @@ export default function CrowdWorkerEnterPage() {
                   value={bmdcRegNumber}
                   onChange={(e) => setBmdcRegNumber(e.target.value)}
                   className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-medium text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                  placeholder="Optional"
+                  placeholder="eg. 235532"
                 />
               </div>
 
@@ -105,11 +102,6 @@ export default function CrowdWorkerEnterPage() {
             </form>
 
             <div className="pt-8 border-t border-slate-100 dark:border-slate-800 text-center">
-              <p className="text-[10px] text-slate-300 dark:text-slate-600 font-bold uppercase tracking-[0.2em]">Crowd Worker Access</p>
-              <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-2 leading-relaxed">
-                By entering, you agree to follow verification protocols. <br />
-                System version v2.5.0-CW
-              </p>
             </div>
           </div>
         </div>
