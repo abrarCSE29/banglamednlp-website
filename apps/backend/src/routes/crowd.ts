@@ -116,6 +116,68 @@ router.get('/next', async (req: any, res) => {
     }
 });
 
+// GET /api/crowd/session?count=N — claim a batch of N unverified records for a validation session
+router.get('/session', async (req: any, res) => {
+    const workerId = req.worker.workerId;
+    const claimExpiry = new Date(Date.now() - CLAIM_DURATION_MINUTES * 60 * 1000);
+    const requestedCount = parseInt(req.query.count as string) || 10;
+    const count = Math.min(Math.max(requestedCount, 1), 50);
+
+    try {
+        const claimable = await prisma.$queryRaw<{ id: number }[]>`
+            SELECT r.id
+            FROM triage_records r
+            WHERE NOT EXISTS (
+                SELECT 1 FROM verifications v
+                WHERE v.record_id = r.id AND v.is_submitted = true
+            )
+            AND (
+                NOT EXISTS (
+                    SELECT 1 FROM verifications v
+                    WHERE v.record_id = r.id AND v.is_submitted = false
+                )
+                OR EXISTS (
+                    SELECT 1 FROM verifications v
+                    WHERE v.record_id = r.id
+                    AND v.is_submitted = false
+                    AND v.claimed_at < ${claimExpiry}
+                )
+            )
+            ORDER BY RANDOM()
+            LIMIT ${count}
+        `;
+
+        if (claimable.length === 0) {
+            res.json({ records: [] });
+            return;
+        }
+
+        const now = new Date();
+        const claimedIds = claimable.map(r => r.id);
+        await Promise.all(claimedIds.map(recordId =>
+            prisma.verification.upsert({
+                where: { record_id_worker_id: { record_id: recordId, worker_id: workerId } },
+                update: { claimed_at: now, is_submitted: false },
+                create: {
+                    record_id: recordId,
+                    worker_id: workerId,
+                    claimed_at: now,
+                    is_submitted: false,
+                    verified_departments: {},
+                },
+            })
+        ));
+
+        const records = await prisma.triageRecord.findMany({ where: { id: { in: claimedIds } } });
+        records.sort((a, b) => claimedIds.indexOf(a.id) - claimedIds.indexOf(b.id));
+
+        res.json({ records });
+    } catch (error) {
+        console.error('Error fetching session records:', error);
+        res.status(500).json({ message: 'Error fetching session records' });
+    }
+});
+
 // GET /api/crowd/records/:id — get a specific record (for re-entry)
 router.get('/records/:id', async (req: any, res) => {
     const recordId = parseInt(req.params.id);
@@ -218,15 +280,24 @@ router.put('/draft/:id', async (req: any, res) => {
     }
 });
 
-// GET /api/crowd/progress — global stats
+// GET /api/crowd/progress — global stats + this worker's own verified count
 router.get('/progress', async (req: any, res) => {
+    const workerId = req.worker.workerId;
     try {
         const totalRecords = await prisma.triageRecord.count();
         const verifiedCount = await prisma.verification.count({
             where: { is_submitted: true },
         });
+        const workerVerifiedCount = await prisma.verification.count({
+            where: { is_submitted: true, worker_id: workerId },
+        });
 
-        res.json({ totalRecords, verifiedCount, progress: totalRecords > 0 ? Math.round((verifiedCount / totalRecords) * 100) : 0 });
+        res.json({
+            totalRecords,
+            verifiedCount,
+            workerVerifiedCount,
+            progress: totalRecords > 0 ? Math.round((verifiedCount / totalRecords) * 100) : 0,
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching progress' });
     }
