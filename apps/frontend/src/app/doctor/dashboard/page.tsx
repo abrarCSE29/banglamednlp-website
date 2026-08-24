@@ -124,7 +124,7 @@ export default function DoctorDashboard() {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5">
                     <h2 className="text-sm font-bold text-slate-900 dark:text-white">New Verification Session</h2>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed">
-                        Select the number of medical records you wish to validate in this session. Data is fetched securely from the BMDC central repository.
+                        Select the number of medical records you wish to validate in this session. 
                     </p>
 
                     <div className="grid grid-cols-4 gap-2 mt-4">
