@@ -63,8 +63,9 @@ app.use('/api/crowd', crowdRoutes);
 
 const PORT = process.env.PORT || 3001;
 
-// Only listen locally, Vercel handling via export
-if (process.env.NODE_ENV !== 'production') {
+// On Vercel, the platform handles listening via the default export.
+// Everywhere else (local dev, VPS/PM2), the process must listen itself.
+if (!process.env.VERCEL) {
     app.listen(Number(PORT), '0.0.0.0', () => {
         console.log(`Backend server listening on port ${PORT} (all interfaces)`);
     });
