@@ -1,0 +1,23 @@
+services:
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - '1025:1025' # SMTP port
+      - '8025:8025' # Web UI port
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: banglamednlp
+      POSTGRES_PASSWORD: banglamednlp
+      POSTGRES_DB: banglamednlp
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Production uses Supabase (DATABASE_URL env var); this compose file's postgres service is for local dev.
+
+volumes:
+  postgres_data:
