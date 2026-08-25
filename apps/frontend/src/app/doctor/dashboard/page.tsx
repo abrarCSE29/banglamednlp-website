@@ -13,8 +13,26 @@ export default function DoctorDashboard() {
     const router = useRouter();
     const [stats, setStats] = useState({ totalRecords: 0, verifiedCount: 0, workerVerifiedCount: 0 });
     const [loading, setLoading] = useState(true);
-    const [email, setEmail] = useState('');
-    const [bmdcRegNumber, setBmdcRegNumber] = useState('');
+    const [email] = useState(() => {
+        if (typeof window === 'undefined') return '';
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) return '';
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.email || '';
+        } catch {
+            return '';
+        }
+    });
+    const [bmdcRegNumber] = useState(() => {
+        if (typeof window === 'undefined') return '';
+        try {
+            const worker = JSON.parse(localStorage.getItem('worker') || '{}');
+            return worker.bmdc_reg_number || '';
+        } catch {
+            return '';
+        }
+    });
     const [sessionSize, setSessionSize] = useState(10);
     const [starting, setStarting] = useState(false);
 
@@ -26,20 +44,10 @@ export default function DoctorDashboard() {
         }
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            setEmail(payload.email || '');
-        } catch {}
-
-        try {
-            const worker = JSON.parse(localStorage.getItem('worker') || '{}');
-            setBmdcRegNumber(worker.bmdc_reg_number || '');
-        } catch {}
-
         const fetchProgress = async () => {
             try {
-                const { data } = await api.get('/crowd/progress');
-                setStats(data as any);
+                const { data } = await api.get<{ totalRecords: number; verifiedCount: number; workerVerifiedCount: number }>('/crowd/progress');
+                setStats(data);
             } catch (error) {
                 console.error(error);
             } finally {
