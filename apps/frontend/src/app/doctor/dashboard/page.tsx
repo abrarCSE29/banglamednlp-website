@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowRight, Settings, LogOut, ShieldCheck } from 'lucide-react';
+import { Loader2, ArrowRight, Settings, LogOut, ShieldCheck, HeartHandshake } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -97,27 +97,17 @@ export default function DoctorDashboard() {
 
             {/* Content */}
             <div className="flex-1 px-5 py-4 flex flex-col gap-4 max-w-sm w-full mx-auto">
-                {/* Dataset Health Card */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5">
-                    <div className="flex items-center justify-between mb-4">
-                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Dataset Health</span>
-                        <span className="text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 px-2 py-1 rounded-md">
-                            Real-Time
-                        </span>
+                {/* Gratitude Card */}
+                <div className="bg-linear-to-br from-indigo-600 to-indigo-700 dark:from-indigo-700 dark:to-indigo-900 rounded-2xl shadow-sm p-6 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-4">
+                        <HeartHandshake className="w-6 h-6 text-white" />
                     </div>
-                    <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400 leading-none">{pending.toLocaleString()}</p>
-                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1.5">Pending Records</p>
-
-                    <div className="grid grid-cols-2 gap-3 mt-5">
-                        <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Your Progress</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{stats.workerVerifiedCount}</p>
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Total Verified</p>
-                            <p className="text-xl font-black text-emerald-500 dark:text-emerald-400 mt-1">{stats.verifiedCount}</p>
-                        </div>
-                    </div>
+                    <h2 className="text-sm font-bold text-white leading-relaxed">
+                        Thank you for your support in our research.
+                    </h2>
+                    <p className="text-xs font-medium text-indigo-100 mt-2 leading-relaxed">
+                        We appreciate your time and effort in verifying this dataset.
+                    </p>
                 </div>
 
                 {/* New Verification Session Card */}
