@@ -84,54 +84,54 @@ export default function AdminDashboard() {
 
             {/* Quality Metrics Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Acceptance Rate</p>
+                <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Acceptance Rate</p>
                     <div className="flex items-baseline gap-2">
                         <h3 className={`text-2xl md:text-3xl font-black ${getStatusColor(stats?.metrics.acceptanceRate || 0, 'acceptance')}`}>
                             {stats?.metrics.acceptanceRate || 0}%
                         </h3>
-                        <span className="text-[10px] text-slate-400 font-bold">Target ≥80%</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">Target ≥80%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-3 overflow-hidden">
                         <div className={`h-full transition-all duration-1000 ${getStatusColor(stats?.metrics.acceptanceRate || 0, 'acceptance').replace('text', 'bg')}`} style={{ width: `${stats?.metrics.acceptanceRate || 0}%` }} />
                     </div>
                 </div>
 
-                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fix Rate</p>
+                <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Fix Rate</p>
                     <div className="flex items-baseline gap-2">
                         <h3 className={`text-2xl md:text-3xl font-black ${getStatusColor(stats?.metrics.fixRate || 0, 'fix')}`}>
                             {stats?.metrics.fixRate || 0}%
                         </h3>
-                        <span className="text-[10px] text-slate-400 font-bold">Target ≤15%</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">Target ≤15%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-3 overflow-hidden">
                         <div className={`h-full transition-all duration-1000 ${getStatusColor(stats?.metrics.fixRate || 0, 'fix').replace('text', 'bg')}`} style={{ width: `${stats?.metrics.fixRate || 0}%` }} />
                     </div>
                 </div>
 
-                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Rejection Rate</p>
+                <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Rejection Rate</p>
                     <div className="flex items-baseline gap-2">
                         <h3 className={`text-2xl md:text-3xl font-black ${getStatusColor(stats?.metrics.rejectionRate || 0, 'rejection')}`}>
                             {stats?.metrics.rejectionRate || 0}%
                         </h3>
-                        <span className="text-[10px] text-slate-400 font-bold">Target ≤5%</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">Target ≤5%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-3 overflow-hidden">
                         <div className={`h-full transition-all duration-1000 ${getStatusColor(stats?.metrics.rejectionRate || 0, 'rejection').replace('text', 'bg')}`} style={{ width: `${stats?.metrics.rejectionRate || 0}%` }} />
                     </div>
                 </div>
 
-                <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cohen's Kappa</p>
+                <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Cohen's Kappa</p>
                     <div className="flex items-baseline gap-2">
                         <h3 className={`text-2xl md:text-3xl font-black ${getStatusColor(stats?.metrics.cohenKappa || 0, 'kappa')}`}>
                             {stats?.metrics.cohenKappa || 0}
                         </h3>
-                        <span className="text-[10px] text-slate-400 font-bold">Target ≥0.75</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">Target ≥0.75</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-3 overflow-hidden">
                         <div className={`h-full transition-all duration-1000 ${getStatusColor(stats?.metrics.cohenKappa || 0, 'kappa').replace('text', 'bg')}`} style={{ width: `${(Number(stats?.metrics.cohenKappa) || 0) * 100}%` }} />
                     </div>
                 </div>
@@ -139,44 +139,44 @@ export default function AdminDashboard() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
-                    <div className="p-2 md:p-3 bg-indigo-50 text-indigo-500 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                <div className="bg-white dark:bg-slate-900 p-4 md:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
+                    <div className="p-2 md:p-3 bg-indigo-50 dark:bg-indigo-950 text-indigo-500 dark:text-indigo-400 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition-all">
                         <FileStack className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Records</p>
-                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.totalRecords || 0}</h3>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Records</p>
+                        <h3 className="text-lg md:text-xl font-black text-slate-900 dark:text-white leading-none mt-1">{stats?.totalRecords || 0}</h3>
                     </div>
                 </div>
 
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
-                    <div className="p-2 md:p-3 bg-emerald-50 text-emerald-500 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                <div className="bg-white dark:bg-slate-900 p-4 md:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group">
+                    <div className="p-2 md:p-3 bg-emerald-50 dark:bg-emerald-950 text-emerald-500 dark:text-emerald-400 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition-all">
                         <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Verified</p>
-                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.verifiedRecords || 0}</h3>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Verified</p>
+                        <h3 className="text-lg md:text-xl font-black text-slate-900 dark:text-white leading-none mt-1">{stats?.verifiedRecords || 0}</h3>
                     </div>
                 </div>
 
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group col-span-2 md:col-span-1">
-                    <div className="p-2 md:p-3 bg-amber-50 text-amber-500 rounded-xl group-hover:bg-amber-500 group-hover:text-white transition-all">
+                <div className="bg-white dark:bg-slate-900 p-4 md:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-shadow group col-span-2 md:col-span-1">
+                    <div className="p-2 md:p-3 bg-amber-50 dark:bg-amber-950 text-amber-500 dark:text-amber-400 rounded-xl group-hover:bg-amber-500 group-hover:text-white transition-all">
                         <Users className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Workers</p>
-                        <h3 className="text-lg md:text-xl font-black text-slate-900 leading-none mt-1">{stats?.totalWorkers || 0}</h3>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Workers</p>
+                        <h3 className="text-lg md:text-xl font-black text-slate-900 dark:text-white leading-none mt-1">{stats?.totalWorkers || 0}</h3>
                     </div>
                 </div>
             </div>
 
             {/* Overall Progress */}
-            <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="flex justify-between items-end mb-4">
-                    <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Overall Progress</h3>
-                    <span className="text-lg md:text-xl font-black text-emerald-600">{completionPercentage}%</span>
+                    <h3 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight">Overall Progress</h3>
+                    <span className="text-lg md:text-xl font-black text-emerald-600 dark:text-emerald-400">{completionPercentage}%</span>
                 </div>
-                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800">
                     <div
                         className="h-full bg-emerald-500 transition-all duration-1000 ease-out"
                         style={{ width: `${completionPercentage}%` }}
@@ -186,28 +186,28 @@ export default function AdminDashboard() {
             </div>
 
             {/* Crowd Workers Table */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
                     <h3 className="font-semibold text-lg">Crowd Workers</h3>
                 </div>
 
                 {/* Desktop Table */}
                 <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="text-muted-foreground bg-slate-50 uppercase text-xs">
+                        <thead className="text-muted-foreground bg-slate-50 dark:bg-slate-800/60 uppercase text-xs">
                             <tr>
-                                <th className="px-6 py-4 font-medium border-b border-slate-100">Email</th>
-                                <th className="px-6 py-4 font-medium border-b border-slate-100">BMDC Reg #</th>
-                                <th className="px-6 py-4 font-medium text-center border-b border-slate-100">Verifications</th>
-                                <th className="px-6 py-4 font-medium text-right border-b border-slate-100">Joined</th>
+                                <th className="px-6 py-4 font-medium border-b border-slate-100 dark:border-slate-800">Email</th>
+                                <th className="px-6 py-4 font-medium border-b border-slate-100 dark:border-slate-800">BMDC Reg #</th>
+                                <th className="px-6 py-4 font-medium text-center border-b border-slate-100 dark:border-slate-800">Verifications</th>
+                                <th className="px-6 py-4 font-medium text-right border-b border-slate-100 dark:border-slate-800">Joined</th>
                             </tr>
                         </thead>
                         <tbody>
                             {sortedWorkers.map((worker) => (
-                                <tr key={worker.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                <tr key={worker.id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                                     <td className="px-6 py-4 font-medium text-foreground">{worker.email}</td>
                                     <td className="px-6 py-4 text-muted-foreground">{worker.bmdc_reg_number || 'N/A'}</td>
-                                    <td className="px-6 py-4 text-center font-bold text-indigo-600">{worker.verifications_count}</td>
+                                    <td className="px-6 py-4 text-center font-bold text-indigo-600 dark:text-indigo-400">{worker.verifications_count}</td>
                                     <td className="px-6 py-4 text-right text-muted-foreground">
                                         {new Date(worker.created_at).toLocaleDateString()}
                                     </td>
@@ -223,21 +223,21 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Mobile Cards */}
-                <div className="md:hidden divide-y divide-slate-100">
+                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {sortedWorkers.map((worker) => (
-                        <div key={worker.id} className="p-4 hover:bg-slate-50 transition-colors">
+                        <div key={worker.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                             <div className="flex items-center justify-between mb-2">
                                 <div>
                                     <p className="font-medium text-foreground">{worker.email}</p>
                                     <p className="text-xs text-muted-foreground">{worker.bmdc_reg_number || 'N/A'}</p>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-sm font-bold text-indigo-600">{worker.verifications_count}</span>
-                                    <p className="text-[10px] text-slate-400">verifications</p>
+                                    <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{worker.verifications_count}</span>
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-500">verifications</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                <span className="text-xs text-slate-500">Joined: <span className="font-bold text-slate-600">{new Date(worker.created_at).toLocaleDateString()}</span></span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">Joined: <span className="font-bold text-slate-600 dark:text-slate-300">{new Date(worker.created_at).toLocaleDateString()}</span></span>
                             </div>
                         </div>
                     ))}

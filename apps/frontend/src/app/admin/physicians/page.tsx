@@ -46,22 +46,22 @@ export default function WorkersPage() {
             </div>
 
             {/* Desktop Table - md+ */}
-            <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="hidden md:block bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 uppercase text-xs text-muted-foreground">
+                    <thead className="bg-slate-50 dark:bg-slate-800/60 uppercase text-xs text-muted-foreground">
                         <tr>
-                            <th className="px-6 py-4 font-medium border-b border-slate-100">Email</th>
-                            <th className="px-6 py-4 font-medium border-b border-slate-100">BMDC Reg #</th>
-                            <th className="px-6 py-4 font-medium border-b border-slate-100 text-center">Verifications</th>
-                            <th className="px-6 py-4 font-medium border-b border-slate-100 text-right">Joined Date</th>
+                            <th className="px-6 py-4 font-medium border-b border-slate-100 dark:border-slate-800">Email</th>
+                            <th className="px-6 py-4 font-medium border-b border-slate-100 dark:border-slate-800">BMDC Reg #</th>
+                            <th className="px-6 py-4 font-medium border-b border-slate-100 dark:border-slate-800 text-center">Verifications</th>
+                            <th className="px-6 py-4 font-medium border-b border-slate-100 dark:border-slate-800 text-right">Joined Date</th>
                         </tr>
                     </thead>
                     <tbody>
                         {workers.map(worker => (
-                            <tr key={worker.id} className="border-b border-slate-100 hover:bg-slate-50">
+                            <tr key={worker.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60">
                                 <td className="px-6 py-4 font-medium text-foreground">{worker.email}</td>
                                 <td className="px-6 py-4 text-muted-foreground">{worker.bmdc_reg_number}</td>
-                                <td className="px-6 py-4 text-center font-bold text-indigo-600">{worker._count?.verifications ?? 0}</td>
+                                <td className="px-6 py-4 text-center font-bold text-indigo-600 dark:text-indigo-400">{worker._count?.verifications ?? 0}</td>
                                 <td className="px-6 py-4 text-right text-muted-foreground">{new Date(worker.created_at).toLocaleDateString()}</td>
                             </tr>
                         ))}
@@ -75,17 +75,17 @@ export default function WorkersPage() {
             {/* Mobile Cards - below md */}
             <div className="md:hidden space-y-3">
                 {workers.map(worker => (
-                    <div key={worker.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+                    <div key={worker.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 space-y-3">
                         <div className="font-medium text-foreground truncate">{worker.email}</div>
                         <div className="text-sm text-muted-foreground">BMDC Reg #: {worker.bmdc_reg_number}</div>
                         <div className="flex gap-4 text-xs">
-                            <span className="text-indigo-600">Verifications: <strong>{worker._count?.verifications ?? 0}</strong></span>
+                            <span className="text-indigo-600 dark:text-indigo-400">Verifications: <strong>{worker._count?.verifications ?? 0}</strong></span>
                         </div>
                         <div className="text-xs text-muted-foreground">Joined: {new Date(worker.created_at).toLocaleDateString()}</div>
                     </div>
                 ))}
                 {workers.length === 0 && (
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center text-muted-foreground">No workers found.</div>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-8 text-center text-muted-foreground">No workers found.</div>
                 )}
             </div>
         </div>

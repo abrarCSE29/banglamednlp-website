@@ -7,7 +7,7 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-const SESSION_SIZES = [5, 10, 20, 50];
+const SESSION_SIZES = [10, 20, 30 ,40];
 
 export default function DoctorDashboard() {
     const router = useRouter();
@@ -33,7 +33,7 @@ export default function DoctorDashboard() {
             return '';
         }
     });
-    const [sessionSize, setSessionSize] = useState(10);
+    const [sessionSize, setSessionSize] = useState(20);
     const [starting, setStarting] = useState(false);
 
     useEffect(() => {
@@ -121,8 +121,8 @@ export default function DoctorDashboard() {
                 {/* New Verification Session Card */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5">
                     <h2 className="text-sm font-bold text-slate-900 dark:text-white">New Verification Session</h2>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed">
-                        Select the number of medical records you wish to validate in this session. 
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed text-justify">
+                        Select the number of medical records you wish to validate in this session. We encourage you to verify the dataset in multiple session according to your convinience
                     </p>
 
                     <div className="grid grid-cols-4 gap-2 mt-4">

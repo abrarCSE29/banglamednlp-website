@@ -49,15 +49,15 @@ export default function CrowdWorkerEnterPage() {
             <div className="inline-flex w-20 h-20 bg-indigo-500/10 rounded-3xl items-center justify-center mb-6 border border-white/10 shadow-inner">
               <HeartPulse className="w-10 h-10 text-indigo-400" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white uppercase font-poppins">
-              Bangla Medical <span className="text-indigo-400">Triage</span> Verification
+            <h1 className="text-3xl font-bold tracking-tight text-white  font-poppins">
+              BanglaMedNlp <br></br><span className="text-indigo-400">Dataset Verification Portal</span> 
             </h1>
           </div>
 
           <div className="p-8 md:p-12 space-y-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" htmlFor="email">
+                <label className="text-[12px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" htmlFor="email">
                   Email
                 </label>
                 <input
@@ -72,7 +72,7 @@ export default function CrowdWorkerEnterPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" htmlFor="bmdc">
+                <label className="text-[12px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" htmlFor="bmdc">
                   BMDC Registration Number
                 </label>
                 <input
@@ -94,7 +94,7 @@ export default function CrowdWorkerEnterPage() {
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    <span>Start Verifying</span>
+                    <span>Proceed to Portal</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

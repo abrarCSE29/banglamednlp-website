@@ -27,7 +27,7 @@ function SessionVerification() {
     const [globalProgress, setGlobalProgress] = useState({ verifiedCount: 0, totalRecords: 0 });
     const [complete, setComplete] = useState(false);
     const [completionStats, setCompletionStats] = useState({ validated: 0, totalVerified: 0, remaining: 0 });
-    const [countdown, setCountdown] = useState(2);
+    const [countdown, setCountdown] = useState(5);
 
     useEffect(() => {
         const load = async () => {
