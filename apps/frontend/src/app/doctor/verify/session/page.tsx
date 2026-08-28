@@ -14,6 +14,8 @@ const DEPARTMENTS = [
     'hematology', 'urology', 'gynecology', 'rheumatology'
 ];
 
+const SESSION_SIZES = [10, 20, 30, 40];
+
 function SessionVerification() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -27,10 +29,14 @@ function SessionVerification() {
     const [globalProgress, setGlobalProgress] = useState({ verifiedCount: 0, totalRecords: 0 });
     const [complete, setComplete] = useState(false);
     const [completionStats, setCompletionStats] = useState({ validated: 0, totalVerified: 0, remaining: 0 });
-    const [countdown, setCountdown] = useState(5);
+    const [nextSessionSize, setNextSessionSize] = useState(count);
 
     useEffect(() => {
         const load = async () => {
+            setLoading(true);
+            setComplete(false);
+            setCurrentIndex(0);
+            setSubmitting(false);
             try {
                 const [sessionRes, progressRes] = await Promise.all([
                     api.get(`/crowd/session?count=${count}`),
@@ -66,15 +72,9 @@ function SessionVerification() {
         setSelections(initial);
     }, [currentRecord]);
 
-    useEffect(() => {
-        if (!complete) return;
-        if (countdown <= 0) {
-            router.push('/doctor/dashboard');
-            return;
-        }
-        const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
-        return () => clearTimeout(timer);
-    }, [complete, countdown, router]);
+    const handleContinue = () => {
+        router.push(`/doctor/verify/session?count=${nextSessionSize}`);
+    };
 
     const handleCheckbox = (dep: string) => {
         setSelections(prev => ({ ...prev, [dep]: !prev[dep] }));
@@ -101,6 +101,7 @@ function SessionVerification() {
                     remaining: Math.max(data.totalRecords - data.verifiedCount, 0),
                 });
                 setComplete(true);
+                setSubmitting(false);
             }
         } catch (error) {
             toast.error('Submission Failed');
@@ -142,13 +143,45 @@ function SessionVerification() {
                     </div>
                 </div>
 
-                <button
-                    onClick={() => router.push('/doctor/dashboard')}
-                    className="w-full max-w-xs mt-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50"
-                >
-                    <span>Back to Home ({countdown}s)</span>
-                    <ArrowRight className="w-4 h-4" />
-                </button>
+                {completionStats.remaining > 0 && (
+                    <div className="w-full max-w-xs mt-6">
+                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Continue verifying more records?</p>
+                        <div className="grid grid-cols-4 gap-2">
+                            {SESSION_SIZES.map((size) => (
+                                <button
+                                    key={size}
+                                    onClick={() => setNextSessionSize(size)}
+                                    className={cn(
+                                        "rounded-xl py-3 flex items-center justify-center text-sm font-black border transition-all",
+                                        nextSessionSize === size
+                                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-900/50"
+                                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+                                    )}
+                                >
+                                    {size}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                <div className="w-full max-w-xs mt-4 space-y-2">
+                    {completionStats.remaining > 0 && (
+                        <button
+                            onClick={handleContinue}
+                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50"
+                        >
+                            <span>Verify {nextSessionSize} More</span>
+                            <ArrowRight className="w-4 h-4" />
+                        </button>
+                    )}
+                    <button
+                        onClick={() => router.push('/doctor/dashboard')}
+                        className="w-full py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                    >
+                        <span>Back to Home</span>
+                    </button>
+                </div>
             </div>
         );
     }
